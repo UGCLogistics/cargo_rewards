@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- The landing page describing the logistics loyalty program -->
+  <url>
+    <loc>https://ugc-logistics-rewards.com/</loc>
+  </url>
+  <!-- Login page -->
+  <url>
+    <loc>https://ugc-logistics-rewards.com/login</loc>
+  </url>
+  <!-- Registration page -->
+  <url>
+    <loc>https://ugc-logistics-rewards.com/register</loc>
+  </url>
+</urlset>

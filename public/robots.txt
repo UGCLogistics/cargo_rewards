@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ugc-logistics-rewards.com/sitemap.xml

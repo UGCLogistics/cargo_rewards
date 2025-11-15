@@ -1,0 +1,66 @@
+/* Aktifkan Tailwind di seluruh app */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Global styles for the CARGO Rewards portal.
+  This theme uses a dark glassmorphism aesthetic with a bold accent color.
+*/
+
+/* Colour palette and re-usable variables */
+:root {
+  /* Base background colour */
+  --background: #0d121a;
+  /* Card and sidebar surfaces use a semi-transparent layer to create a glass effect */
+  --surface: rgba(255, 255, 255, 0.05);
+  /* Borders are subtle and help separate surfaces */
+  --border: rgba(255, 255, 255, 0.12);
+  /* Primary accent colour drawn from the brand palette */
+  --accent: #ff4600;
+  /* Default text colour */
+  --text: #f7f8fa;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
+    sans-serif;
+  background: var(--background);
+  color: var(--text);
+  height: 100%;
+}
+
+/* Apply a subtle glassy effect to any element with the `.glass` class */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  background-color: var(--accent);
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #e03e00;
+}
+
+* {
+  box-sizing: border-box;
+}
