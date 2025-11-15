@@ -39,8 +39,6 @@ cargo_rewards_nextjs/
 
 ## 🎨 Fitur Tambahan
 
-Versi repository ini telah dikembangkan lebih lanjut untuk memenuhi kualifikasi tambahan yang Anda sebutkan:
-
 * **Dark glassmorphism UI dengan aksen `#ff4600`** – Tema gelap dengan efek kaca diterapkan melalui variabel CSS di `app/globals.css`. Semua permukaan (sidebar, kartu keanggotaan) menggunakan latar semi–transparan dan blur, dengan teks putih dan aksen oranye.
 * **Kartu Member** – Komponen `components/MembershipCard.tsx` menampilkan nama pengguna, ID singkat, peran dan saldo poin. Komponen ini ditampilkan di sidebar pada setiap halaman dashboard dan dapat diekspor ke PNG melalui tombol di kartu.
 * **Navigasi peran** – Sidebar dashboard memuat menu dinamis berdasarkan peran (`ADMIN`, `MANAGER`, `STAFF`, `CUSTOMER`). Admin memiliki modul lengkap termasuk manajemen user, tambah user, data pelanggan, konfigurasi program, membership, import transaksi, approval redeem, KPI internal dan audit log. Manager memiliki modul yang hampir sama kecuali pembuatan user/pelanggan dan import transaksi. Staff hanya dapat mengimpor transaksi dan melihat KPI internal, sedangkan Customer memiliki dashboard KPI eksternal.
@@ -59,7 +57,6 @@ Versi repository ini telah dikembangkan lebih lanjut untuk memenuhi kualifikasi 
 
 ## 🚀 Langkah–langkah Setup Lengkap
 
-Ikuti petunjuk super detail di bawah ini untuk menjalankan portal ini di lingkungan lokal Anda dan mendeploy ke Vercel.  Jika Anda baru dengan Next.js atau Supabase, jangan khawatir – setiap langkah dijelaskan.
 
 ### 1. Persiapan Prasyarat
 
@@ -90,7 +87,6 @@ Atau download ZIP dan ekstrak ke folder `cargo_rewards_nextjs`.
 
 ### 3. Install Dependensi
 
-Jalankan perintah berikut di dalam direktori proyek untuk menginstall semua paket yang diperlukan:
 
 ```bash
 npm install
@@ -99,8 +95,6 @@ yarn install
 ```
 
 ### 4. Membuat Proyek Supabase
-
-Portal ini menggunakan Supabase sebagai backend – ia menyediakan autentikasi, basis data PostgreSQL, storage dan edge functions.  Untuk menyiapkannya:
 
 1. **Buat Project**: Masuk ke <https://app.supabase.com> dan klik **New Project**.
 
@@ -166,8 +160,6 @@ Anda dapat menambah route lain seperti `app/api/cashback/route.ts` untuk menjala
 
 #### Halaman Dashboard
 
-Semua halaman di bawah `/dashboard` dibungkus oleh `DashboardLayout`.  Tata letak ini menampilkan navigasi sisi kiri dengan tautan ke modul yang berbeda serta tombol keluar.  Halaman–halaman spesifik:
-
 - **Transaksi** – daftar semua transaksi Anda dan tombol untuk membuat atau mengimpor transaksi.
 - **Buat Transaksi** – form sederhana untuk memasukkan transaksi baru.  Data disimpan melalui API dan perhitungan diskon/poin terjadi di server.
 - **Impor Transaksi** – stub untuk impor CSV/XLSX; ganti dengan logika upload ke Supabase Storage kemudian panggil API untuk memproses.
@@ -175,8 +167,6 @@ Semua halaman di bawah `/dashboard` dibungkus oleh `DashboardLayout`.  Tata leta
 - **Redeem** – form untuk mengajukan penukaran poin menjadi kredit pengiriman atau cash out serta daftar permintaan sebelumnya.
 
 ### 7. Deployment ke Vercel
-
-Untuk deploy ke cloud secara gratis dan mudah, gunakan Vercel.  Berikut langkahnya:
 
 1. **Push Kode ke Git**: Pastikan proyek ada di GitHub, GitLab, atau Bitbucket.  Jika belum, inisialisasi repository lalu push:
 
@@ -196,8 +186,6 @@ Untuk deploy ke cloud secara gratis dan mudah, gunakan Vercel.  Berikut langkahn
 
 ### 8. Roadmap Pengembangan
 
-Versi awal ini menyediakan kerangka dasar.  Anda bisa mengembangkannya dengan fitur lanjutan berikut:
-
 1. **Role–based Dashboard**: Gunakan `user.role` dari tabel `users` (atau metadata Supabase) untuk menampilkan modul berbeda untuk Admin, Manager, Staff, dan Customer seperti dijabarkan di matriks akses【89546385958591†L61-L63】.
 
 2. **Impor CSV/XLSX**: Implementasikan upload file ke Supabase Storage, parse file menggunakan Serverless Function, lalu insert data ke `transactions` table.  Pastikan validasi data dilakukan sebelum insert massal.
@@ -207,5 +195,3 @@ Versi awal ini menyediakan kerangka dasar.  Anda bisa mengembangkannya dengan fi
 4. **Approval Redeem & Audit Logs**: Tambahkan halaman admin/manager untuk menyetujui atau menolak permintaan redeem.  Setiap aksi terekam ke tabel `audit_logs` untuk kepatuhan.
 
 5. **Filament / Admin UI**: Untuk administrator, Anda dapat membuat antarmuka CRUD menggunakan library seperti [Refine](https://refine.dev/) atau membuat modul admin manual di Next.js.
-
-Dengan mengikuti panduan ini Anda akan memiliki portal loyalti CARGO yang solid, terkelola dengan baik, dan mudah dipelihara.  Selamat mencoba!
