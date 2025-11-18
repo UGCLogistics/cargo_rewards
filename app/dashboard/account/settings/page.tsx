@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "context/AuthContext";
+import supabase from "lib/supabaseClient";
 
 interface AccountProfile {
   name: string | null;
@@ -31,19 +32,29 @@ export default function AccountSettingsPage() {
     setMessage(null);
 
     try {
-      const res = await fetch("/api/account/settings");
-      const json = await res.json();
+      const { data, error } = await supabase
+        .from("users")
+        .select("name, companyname, status, created_at")
+        .eq("id", user.id)
+        .maybeSingle();
 
-      if (!res.ok) {
-        throw new Error(json?.error || "Gagal memuat profil akun");
+      if (error) {
+        // kalau row belum ada, jangan matiin halaman
+        console.warn("loadProfile error:", error);
       }
 
-      const data = (json?.data || {}) as AccountProfile;
-      setProfile(data);
-      setNameInput(data.name || "");
+      const initial: AccountProfile = {
+        name: data?.name ?? ((user.user_metadata as any)?.name ?? null),
+        companyname: data?.companyname ?? null,
+        status: data?.status ?? null,
+        created_at: data?.created_at ?? null,
+      };
+
+      setProfile(initial);
+      setNameInput(initial.name || "");
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Terjadi kesalahan");
+      setError(err.message || "Terjadi kesalahan saat memuat profil.");
     } finally {
       setLoading(false);
     }
@@ -58,7 +69,9 @@ export default function AccountSettingsPage() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    if (!nameInput.trim()) {
+
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
       setError("Nama tidak boleh kosong.");
       return;
     }
@@ -68,22 +81,32 @@ export default function AccountSettingsPage() {
     setMessage(null);
 
     try {
-      const res = await fetch("/api/account/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: nameInput.trim() }),
+      // 1) simpan ke public.users (upsert supaya kalau belum ada row, dibuat)
+      const { error: upsertErr } = await supabase
+        .from("users")
+        .upsert(
+          {
+            id: user.id,
+            name: trimmed,
+          },
+          { onConflict: "id" }
+        );
+
+      if (upsertErr) {
+        throw upsertErr;
+      }
+
+      // 2) update metadata name di auth.users
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: { ...(user.user_metadata || {}), name: trimmed },
       });
 
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json?.error || "Gagal menyimpan profil");
+      if (authErr) {
+        throw authErr;
       }
 
       setMessage("Profil berhasil diperbarui.");
-      setProfile((prev) =>
-        prev ? { ...prev, name: nameInput.trim() } : prev
-      );
+      setProfile((prev) => (prev ? { ...prev, name: trimmed } : prev));
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Terjadi kesalahan saat menyimpan profil.");
@@ -114,16 +137,12 @@ export default function AccountSettingsPage() {
     setSavingPassword(true);
 
     try {
-      const res = await fetch("/api/account/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword }),
+      const { error: pwdErr } = await supabase.auth.updateUser({
+        password: newPassword,
       });
 
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json?.error || "Gagal mengubah password");
+      if (pwdErr) {
+        throw pwdErr;
       }
 
       setMessage("Password berhasil diperbarui.");
@@ -171,7 +190,7 @@ export default function AccountSettingsPage() {
         </div>
       )}
 
-      {/* Info dasar */}
+      {/* Info dasar + nama */}
       <section className="glass rounded-2xl px-4 py-4 space-y-3">
         <h2 className="text-sm font-semibold text-white">Informasi Akun</h2>
 
