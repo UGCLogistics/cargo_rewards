@@ -325,14 +325,14 @@ export default function HomePage() {
                   Langkah 1
                 </p>
                 <h3 className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
-                  Registrasi – Hello Discount
+                  Registrasi - Hello Discount
                 </h3>
                 <p className="text-xs" style={{ color: "rgba(247,248,250,0.9)" }}>
                   Diskon langsung di pengiriman pertama:
                 </p>
                 <ul className="text-xs space-y-1" style={{ color: "rgba(247,248,250,0.8)" }}>
-                  <li>• 5% untuk Rp 1 – 4,99 juta</li>
-                  <li>• 10% untuk Rp 5 – 14,99 juta</li>
+                  <li>• 5% untuk Rp 1 - 4,99 juta</li>
+                  <li>• 10% untuk Rp 5 - 14,99 juta</li>
                   <li>• 15% untuk ≥ Rp 15 juta</li>
                 </ul>
               </div>
@@ -342,13 +342,13 @@ export default function HomePage() {
                   Langkah 2
                 </p>
                 <h3 className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
-                  Aktivasi – Active Cashback
+                  Aktivasi - Active Cashback
                 </h3>
                 <p className="text-xs" style={{ color: "rgba(247,248,250,0.9)" }}>
                   Cashback dari akumulasi transaksi 3 bulan:
                 </p>
                 <ul className="text-xs space-y-1" style={{ color: "rgba(247,248,250,0.8)" }}>
-                  <li>• 5% untuk total Rp 20 – 49,99 juta</li>
+                  <li>• 5% untuk total Rp 20 - 49,99 juta</li>
                   <li>• 7,5% untuk total ≥ Rp 50 juta</li>
                 </ul>
               </div>
@@ -358,7 +358,7 @@ export default function HomePage() {
                   Langkah 3
                 </p>
                 <h3 className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
-                  Retensi – Unlimited Points
+                  Retensi - Unlimited Points
                 </h3>
                 <p className="text-xs" style={{ color: "rgba(247,248,250,0.9)" }}>
                   Setiap Rp 10.000 pengiriman = 1 poin. 1 poin = Rp 250. Level
@@ -687,7 +687,7 @@ export default function HomePage() {
               {activePhase === 2 && (
                 <>
                   <h3 className="font-semibold">
-                    Timeline Aktivasi (bulan 1 – 3)
+                    Timeline Aktivasi (bulan 1 - 3)
                   </h3>
                   <ul className="list-disc list-inside space-y-1">
                     <li>
@@ -717,7 +717,7 @@ export default function HomePage() {
               {activePhase === 3 && (
                 <>
                   <h3 className="font-semibold">
-                    Timeline Pertumbuhan (bulan 4 – 6 dan seterusnya)
+                    Timeline Pertumbuhan (bulan 4 - 6 dan seterusnya)
                   </h3>
                   <ul className="list-disc list-inside space-y-1">
                     <li>

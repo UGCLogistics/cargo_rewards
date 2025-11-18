@@ -296,7 +296,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Tipe akun – hanya tampil informasi, tidak ada opsi internal */}
+            {/* Tipe akun - hanya tampil informasi, tidak ada opsi internal */}
             <div>
               <label className="block text-xs font-medium text-slate-200 mb-1">
                 Tipe akun

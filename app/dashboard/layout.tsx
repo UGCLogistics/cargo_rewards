@@ -89,7 +89,7 @@ export default function DashboardLayout({
   // =========================
 
   if (role === "ADMIN") {
-    // INTERNAL – ADMIN: semua akses, TAPI TIDAK ADA REDEEM CUSTOMER DI MENU
+    // INTERNAL - ADMIN: semua akses, TAPI TIDAK ADA REDEEM CUSTOMER DI MENU
     navItems = [
       {
         href: "/dashboard/admin/internal-kpi",
@@ -149,7 +149,7 @@ export default function DashboardLayout({
       ...accountItems,
     ];
   } else if (role === "MANAGER") {
-    // INTERNAL – MANAGER: TIDAK ADA REDEEM CUSTOMER DI MENU
+    // INTERNAL - MANAGER: TIDAK ADA REDEEM CUSTOMER DI MENU
     navItems = [
       {
         href: "/dashboard/manager/internal-kpi",
@@ -184,7 +184,7 @@ export default function DashboardLayout({
       ...accountItems,
     ];
   } else if (role === "STAFF") {
-    // INTERNAL – STAFF: fokus ke dashboard & transaksi saja, TANPA menu redeem
+    // INTERNAL - STAFF: fokus ke dashboard & transaksi saja, TANPA menu redeem
     navItems = [
       {
         href: "/dashboard/staff/internal-kpi",
@@ -199,7 +199,7 @@ export default function DashboardLayout({
       ...accountItems,
     ];
   } else {
-    // EXTERNAL – CUSTOMER: punya Riwayat Rewards & Penukaran Poin
+    // EXTERNAL - CUSTOMER: punya Riwayat Rewards & Penukaran Poin
     navItems = [
       {
         href: "/dashboard/customer/external-kpi",
@@ -275,7 +275,7 @@ export default function DashboardLayout({
           )}
         </div>
 
-        {/* NAV – scrollable */}
+        {/* NAV - scrollable */}
         <nav className="mt-1 flex-1 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active =

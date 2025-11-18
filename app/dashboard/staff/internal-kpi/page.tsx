@@ -44,7 +44,7 @@ export default function StaffInternalKpiPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl md:text-3xl font-semibold text-white">
-          Dashboard KPI Internal – Staff
+          Dashboard KPI Internal - Staff
         </h1>
         <p className="mt-1 text-sm text-slate-400 max-w-2xl">
           Ringkasan KPI untuk memantau workload, jumlah transaksi yang telah

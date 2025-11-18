@@ -182,7 +182,7 @@ export default function AdminInternalKpiPage() {
       {/* Header */}
       <header>
         <h1 className="text-2xl md:text-3xl font-semibold text-white">
-          Dashboard KPI Internal – Admin
+          Dashboard KPI Internal - Admin
         </h1>
         <p className="mt-1 text-sm text-slate-400 max-w-2xl">
           Ringkasan performa global program C.A.R.G.O Rewards untuk seluruh

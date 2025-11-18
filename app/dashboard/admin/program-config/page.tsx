@@ -13,7 +13,7 @@ interface ConfigRow {
 
 /**
  * AdminProgramConfigPage
- * – Menampilkan & edit config JSON dari tabel program_configs.
+ * - Menampilkan & edit config JSON dari tabel program_configs.
  */
 export default function AdminProgramConfigPage() {
   const { user } = useAuth();

@@ -267,7 +267,7 @@ export default function TransactionsPage() {
             <div>
               Menampilkan{" "}
               <span className="font-semibold">
-                {from}–{to}
+                {from}-{to}
               </span>{" "}
               dari{" "}
               <span className="font-semibold">

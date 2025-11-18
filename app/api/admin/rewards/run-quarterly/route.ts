@@ -30,8 +30,8 @@ type QuarterInfo = {
 function getQuarterFromDate(dateStr: string): { year: number; quarter: number } {
   const d = new Date(dateStr + "T00:00:00.000Z");
   const year = d.getUTCFullYear();
-  const month = d.getUTCMonth(); // 0–11
-  const quarter = Math.floor(month / 3) + 1; // 1–4
+  const month = d.getUTCMonth(); // 0-11
+  const quarter = Math.floor(month / 3) + 1; // 1-4
   return { year, quarter };
 }
 

@@ -1,6 +1,6 @@
-# C.A.R.G.O Rewards Portal – Next.js + Supabase
+# C.A.R.G.O Rewards Portal - Next.js + Supabase
 
-This repository contains a fully–functional starting point for the **CARGO Rewards** portal built using the [Next.js App Router](https://nextjs.org/docs) and [Supabase](https://supabase.com) as the backend.  It implements the core pieces of the loyalty program (user authentication, transaction capture, reward ledger and redemption requests) and provides a solid foundation on which to build features like admin dashboards and scheduled cashback evaluation.
+This repository contains a fully-functional starting point for the **CARGO Rewards** portal built using the [Next.js App Router](https://nextjs.org/docs) and [Supabase](https://supabase.com) as the backend.  It implements the core pieces of the loyalty program (user authentication, transaction capture, reward ledger and redemption requests) and provides a solid foundation on which to build features like admin dashboards and scheduled cashback evaluation.
 
 ## 🗂 Struktur Direktori
 
@@ -39,23 +39,23 @@ cargo_rewards_nextjs/
 
 ## 🎨 Fitur Tambahan
 
-* **Dark glassmorphism UI dengan aksen `#ff4600`** – Tema gelap dengan efek kaca diterapkan melalui variabel CSS di `app/globals.css`. Semua permukaan (sidebar, kartu keanggotaan) menggunakan latar semi–transparan dan blur, dengan teks putih dan aksen oranye.
-* **Kartu Member** – Komponen `components/MembershipCard.tsx` menampilkan nama pengguna, ID singkat, peran dan saldo poin. Komponen ini ditampilkan di sidebar pada setiap halaman dashboard dan dapat diekspor ke PNG melalui tombol di kartu.
-* **Navigasi peran** – Sidebar dashboard memuat menu dinamis berdasarkan peran (`ADMIN`, `MANAGER`, `STAFF`, `CUSTOMER`). Admin memiliki modul lengkap termasuk manajemen user, tambah user, data pelanggan, konfigurasi program, membership, import transaksi, approval redeem, KPI internal dan audit log. Manager memiliki modul yang hampir sama kecuali pembuatan user/pelanggan dan import transaksi. Staff hanya dapat mengimpor transaksi dan melihat KPI internal, sedangkan Customer memiliki dashboard KPI eksternal.
+* **Dark glassmorphism UI dengan aksen `#ff4600`** - Tema gelap dengan efek kaca diterapkan melalui variabel CSS di `app/globals.css`. Semua permukaan (sidebar, kartu keanggotaan) menggunakan latar semi-transparan dan blur, dengan teks putih dan aksen oranye.
+* **Kartu Member** - Komponen `components/MembershipCard.tsx` menampilkan nama pengguna, ID singkat, peran dan saldo poin. Komponen ini ditampilkan di sidebar pada setiap halaman dashboard dan dapat diekspor ke PNG melalui tombol di kartu.
+* **Navigasi peran** - Sidebar dashboard memuat menu dinamis berdasarkan peran (`ADMIN`, `MANAGER`, `STAFF`, `CUSTOMER`). Admin memiliki modul lengkap termasuk manajemen user, tambah user, data pelanggan, konfigurasi program, membership, import transaksi, approval redeem, KPI internal dan audit log. Manager memiliki modul yang hampir sama kecuali pembuatan user/pelanggan dan import transaksi. Staff hanya dapat mengimpor transaksi dan melihat KPI internal, sedangkan Customer memiliki dashboard KPI eksternal.
 
-* **Halaman Beranda Personalisasi** – Saat pengguna masuk ke dasbor, halaman `Home` menampilkan sapaan seperti `Hi, Nama User`, nama perusahaan, serta tanggal hari ini.  Di bawah sapaan ini terdapat ringkasan KPI berupa lima kartu (jumlah transaksi, total publish rate, total diskon, total cashback, dan total poin) yang dihitung secara otomatis dari API sesuai peran.  Di bawah ringkasan, ada tautan cepat (card) ke modul utama seperti Transaksi, Poin & Ledger, Redeem, dan KPI.
+* **Halaman Beranda Personalisasi** - Saat pengguna masuk ke dasbor, halaman `Home` menampilkan sapaan seperti `Hi, Nama User`, nama perusahaan, serta tanggal hari ini.  Di bawah sapaan ini terdapat ringkasan KPI berupa lima kartu (jumlah transaksi, total publish rate, total diskon, total cashback, dan total poin) yang dihitung secara otomatis dari API sesuai peran.  Di bawah ringkasan, ada tautan cepat (card) ke modul utama seperti Transaksi, Poin & Ledger, Redeem, dan KPI.
 
-* **Informasi Akun dan Pengaturan Akun** – Modul baru di menu dashboard yang memungkinkan pengguna melihat detail akunnya dan memperbarui informasi dasar.  Halaman **Account Info** menampilkan nama, email, perusahaan, peran, status, tanggal dibuat (member since), dan waktu login terakhir.  Halaman **Pengaturan Akun** menyediakan formulir untuk mengganti kata sandi dan mengunggah foto profil (avatar) yang tersimpan di bucket `avatars` Supabase Storage.
-* **Halaman modul lengkap** – Selain stub, versi ini menyediakan implementasi fungsional untuk:
-  - **Manajemen User & Peran** (`/dashboard/admin/users`) – Admin dapat melihat daftar user dan mengubah peran.  Tombol baru “Tambah User” mengarahkan ke formulir pembuatan user (`/dashboard/admin/users/create`).
-  - **Data Pelanggan** (`/dashboard/admin/customers`) – Admin dapat melihat dan menambah data perusahaan/pelanggan beserta PIC, NPWP, kontak dan sales.  Manager dapat melihat daftar pelanggan di `/dashboard/manager/customers`.
-  - **Membership** (`/dashboard/admin/membership` dan `/dashboard/manager/membership`) – Menampilkan tier keanggotaan (Silver/Gold/Platinum) dan total poin untuk setiap user dengan opsi filter tanggal.  Manager dapat membaca laporan ini tetapi tidak mengubah data.
-  - **Program Config** – Admin dapat melihat dan mengubah konfigurasi program (JSON) di `/dashboard/admin/program-config`.  Manager hanya bisa melihat konfigurasi di `/dashboard/manager/program-config` tanpa tombol simpan.
-  - **Tambah User** (`/dashboard/admin/users/create`) – Formulir untuk membuat akun baru dengan email, password, nama dan peran.  Endpoint `POST /api/admin/users/create` menggunakan Supabase Admin API untuk mendaftarkan user di auth dan tabel `public.users`.
-  - **Data Pelanggan & Tambah Pelanggan** – Admin dapat menambah pelanggan baru lewat formulir di halaman Data Pelanggan, sedangkan Manager hanya bisa melihat.
-* **Membership & Analitik KPI** – Modul membership menghitung tier keanggotaan berdasarkan total poin (≥1000 poin = Platinum, ≥500 poin = Gold, sisanya Silver) dengan filter tanggal. KPI internal maupun eksternal memiliki grafik interaktif dengan filter tanggal, sales name dan level membership, serta opsi ekspor CSV. 
+* **Informasi Akun dan Pengaturan Akun** - Modul baru di menu dashboard yang memungkinkan pengguna melihat detail akunnya dan memperbarui informasi dasar.  Halaman **Account Info** menampilkan nama, email, perusahaan, peran, status, tanggal dibuat (member since), dan waktu login terakhir.  Halaman **Pengaturan Akun** menyediakan formulir untuk mengganti kata sandi dan mengunggah foto profil (avatar) yang tersimpan di bucket `avatars` Supabase Storage.
+* **Halaman modul lengkap** - Selain stub, versi ini menyediakan implementasi fungsional untuk:
+  - **Manajemen User & Peran** (`/dashboard/admin/users`) - Admin dapat melihat daftar user dan mengubah peran.  Tombol baru “Tambah User” mengarahkan ke formulir pembuatan user (`/dashboard/admin/users/create`).
+  - **Data Pelanggan** (`/dashboard/admin/customers`) - Admin dapat melihat dan menambah data perusahaan/pelanggan beserta PIC, NPWP, kontak dan sales.  Manager dapat melihat daftar pelanggan di `/dashboard/manager/customers`.
+  - **Membership** (`/dashboard/admin/membership` dan `/dashboard/manager/membership`) - Menampilkan tier keanggotaan (Silver/Gold/Platinum) dan total poin untuk setiap user dengan opsi filter tanggal.  Manager dapat membaca laporan ini tetapi tidak mengubah data.
+  - **Program Config** - Admin dapat melihat dan mengubah konfigurasi program (JSON) di `/dashboard/admin/program-config`.  Manager hanya bisa melihat konfigurasi di `/dashboard/manager/program-config` tanpa tombol simpan.
+  - **Tambah User** (`/dashboard/admin/users/create`) - Formulir untuk membuat akun baru dengan email, password, nama dan peran.  Endpoint `POST /api/admin/users/create` menggunakan Supabase Admin API untuk mendaftarkan user di auth dan tabel `public.users`.
+  - **Data Pelanggan & Tambah Pelanggan** - Admin dapat menambah pelanggan baru lewat formulir di halaman Data Pelanggan, sedangkan Manager hanya bisa melihat.
+* **Membership & Analitik KPI** - Modul membership menghitung tier keanggotaan berdasarkan total poin (≥1000 poin = Platinum, ≥500 poin = Gold, sisanya Silver) dengan filter tanggal. KPI internal maupun eksternal memiliki grafik interaktif dengan filter tanggal, sales name dan level membership, serta opsi ekspor CSV. 
 
-## 🚀 Langkah–langkah Setup Lengkap
+## 🚀 Langkah-langkah Setup Lengkap
 
 
 ### 1. Persiapan Prasyarat
@@ -66,7 +66,7 @@ cargo_rewards_nextjs/
    node --version
    ```
 
-2. **npm atau yarn**: Paket manajer untuk menginstall dependensi.  Secara default, npm sudah terpasang bersama Node.js.  Anda bisa menggunakan `npm` atau `yarn` – contoh di bawah menggunakan `npm`.
+2. **npm atau yarn**: Paket manajer untuk menginstall dependensi.  Secara default, npm sudah terpasang bersama Node.js.  Anda bisa menggunakan `npm` atau `yarn` - contoh di bawah menggunakan `npm`.
 
 3. **Git** (opsional): Untuk meng-clone repository.  Anda juga bisa men-download ZIP dari repo ini.
 
@@ -104,8 +104,8 @@ yarn install
 
 4. **Catat API Keys**: Buka tab **API** di pengaturan proyek Anda.  Di sana ada:
 
-   - `URL`: misalnya `https://abcdefg.supabase.co` – ini menjadi `NEXT_PUBLIC_SUPABASE_URL`.
-   - `anon public` key: kunci publik yang boleh di-embed di frontend – ini menjadi `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+   - `URL`: misalnya `https://abcdefg.supabase.co` - ini menjadi `NEXT_PUBLIC_SUPABASE_URL`.
+   - `anon public` key: kunci publik yang boleh di-embed di frontend - ini menjadi `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
    - `service_role` key: kunci dengan privilege penuh untuk operasi server-side.  *Jangan* gunakan di browser!  Ini opsional tetapi berguna untuk tugas server (misal cron job).  Masukkan ke `SUPABASE_SERVICE_ROLE` jika Anda membutuhkannya.
 
 5. **Import Skema Basis Data**:  Klik menu **SQL Editor** → **New Query** → salin isi file [`supabase/schema.sql`](supabase/schema.sql) ke editor.  Kemudian tekan **RUN**.  Skrip ini akan membuat semua tabel (users, transactions, reward_ledgers, redemptions, dsb.) dan menerapkan kebijakan RLS dasar sehingga hanya pemilik data yang bisa melihat catatannya.
@@ -152,19 +152,19 @@ File `middleware.ts` memeriksa sesi Supabase untuk semua rute yang diawali `/das
 
 Semua operasi data dilakukan melalui [Next.js Route Handlers](https://nextjs.org/docs/app/building-your-application/routing/route-handlers).  File di bawah `app/api` berfungsi sebagai endpoint serverless yang berbicara langsung dengan Supabase menggunakan cookie sesi.  Contohnya:
 
-- `app/api/transactions/route.ts` – menerima `GET` untuk mengambil transaksi Anda sendiri dan `POST` untuk menyimpan transaksi baru.  Fungsi helper `calculateHelloDiscount` dan `calculatePoints` menerapkan aturan promo sesuai brief: diskon 5/10/15 % untuk transaksi pertama【89546385958591†L70-L73】 dan 1 poin per Rp 10 k【89546385958591†L84-L85】.
-- `app/api/rewards/route.ts` – mengambil ledger poin dan kredit Anda.
-- `app/api/redeem/route.ts` – membuat permintaan redeem baru dan menampilkan daftar permintaan yang ada.
+- `app/api/transactions/route.ts` - menerima `GET` untuk mengambil transaksi Anda sendiri dan `POST` untuk menyimpan transaksi baru.  Fungsi helper `calculateHelloDiscount` dan `calculatePoints` menerapkan aturan promo sesuai brief: diskon 5/10/15 % untuk transaksi pertama【89546385958591†L70-L73】 dan 1 poin per Rp 10 k【89546385958591†L84-L85】.
+- `app/api/rewards/route.ts` - mengambil ledger poin dan kredit Anda.
+- `app/api/redeem/route.ts` - membuat permintaan redeem baru dan menampilkan daftar permintaan yang ada.
 
 Anda dapat menambah route lain seperti `app/api/cashback/route.ts` untuk menjalankan evaluasi cashback triwulanan (lihat section **Roadmap** di bawah).
 
 #### Halaman Dashboard
 
-- **Transaksi** – daftar semua transaksi Anda dan tombol untuk membuat atau mengimpor transaksi.
-- **Buat Transaksi** – form sederhana untuk memasukkan transaksi baru.  Data disimpan melalui API dan perhitungan diskon/poin terjadi di server.
-- **Impor Transaksi** – stub untuk impor CSV/XLSX; ganti dengan logika upload ke Supabase Storage kemudian panggil API untuk memproses.
-- **Poin & Ledger** – menampilkan semua mutasi poin/kredit dari tabel `reward_ledgers`.
-- **Redeem** – form untuk mengajukan penukaran poin menjadi kredit pengiriman atau cash out serta daftar permintaan sebelumnya.
+- **Transaksi** - daftar semua transaksi Anda dan tombol untuk membuat atau mengimpor transaksi.
+- **Buat Transaksi** - form sederhana untuk memasukkan transaksi baru.  Data disimpan melalui API dan perhitungan diskon/poin terjadi di server.
+- **Impor Transaksi** - stub untuk impor CSV/XLSX; ganti dengan logika upload ke Supabase Storage kemudian panggil API untuk memproses.
+- **Poin & Ledger** - menampilkan semua mutasi poin/kredit dari tabel `reward_ledgers`.
+- **Redeem** - form untuk mengajukan penukaran poin menjadi kredit pengiriman atau cash out serta daftar permintaan sebelumnya.
 
 ### 7. Deployment ke Vercel
 
@@ -186,7 +186,7 @@ Anda dapat menambah route lain seperti `app/api/cashback/route.ts` untuk menjala
 
 ### 8. Roadmap Pengembangan
 
-1. **Role–based Dashboard**: Gunakan `user.role` dari tabel `users` (atau metadata Supabase) untuk menampilkan modul berbeda untuk Admin, Manager, Staff, dan Customer seperti dijabarkan di matriks akses【89546385958591†L61-L63】.
+1. **Role-based Dashboard**: Gunakan `user.role` dari tabel `users` (atau metadata Supabase) untuk menampilkan modul berbeda untuk Admin, Manager, Staff, dan Customer seperti dijabarkan di matriks akses【89546385958591†L61-L63】.
 
 2. **Impor CSV/XLSX**: Implementasikan upload file ke Supabase Storage, parse file menggunakan Serverless Function, lalu insert data ke `transactions` table.  Pastikan validasi data dilakukan sebelum insert massal.
 
