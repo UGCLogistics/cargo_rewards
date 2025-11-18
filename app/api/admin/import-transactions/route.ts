@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   loadProgramConfigs,
   HelloDiscountConfig,
-} from "lib/rewardsConfig";
+} from "@/lib/rewardsConfig";
 
 // ===== Helpers =====
 
