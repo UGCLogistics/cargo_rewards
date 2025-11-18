@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createRouteHandlerSupabaseClient as createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 
@@ -17,7 +17,7 @@ function getServiceClient() {
  * sum of points. Use this endpoint to build charts over time.
  */
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createRouteHandlerClient({ cookies, headers });
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
