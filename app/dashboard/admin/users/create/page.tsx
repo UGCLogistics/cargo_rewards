@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import DashboardLayout from '../../../layout';
 
 /**
  * AdminAddUserPage provides a form for administrators to create new
@@ -40,7 +39,7 @@ export default function AdminAddUserPage() {
   };
 
   return (
-    <DashboardLayout>
+    <div className="space-y-4">
       <h1>Tambah User</h1>
       {message && <p style={{ color: 'var(--accent)' }}>{message}</p>}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px' }}>
@@ -81,6 +80,6 @@ export default function AdminAddUserPage() {
           {saving ? 'Menyimpan…' : 'Buat User'}
         </button>
       </form>
-    </DashboardLayout>
+    </div>
   );
 }

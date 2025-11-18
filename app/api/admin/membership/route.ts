@@ -1,77 +1,200 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from "next/server";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Helper function to instantiate a Supabase client using the service role.
- * This bypasses row level security and is required for administrative
- * aggregation queries. If the required environment variables are missing
- * this function will throw an error.
- */
-function getServiceClient() {
+/** Supabase service-role client (bypass RLS untuk agregat admin) */
+function getServiceClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE;
-  if (!url || !key) throw new Error('Supabase environment variables are missing');
+  if (!url || !key) {
+    throw new Error("Supabase environment variables are missing");
+  }
   return createClient(url, key, { auth: { persistSession: false } });
+}
+
+function isInternalRole(role: unknown) {
+  if (!role) return false;
+  const r = String(role).toUpperCase();
+  return r === "ADMIN" || r === "MANAGER" || r === "STAFF";
+}
+
+/**
+ * Hitung tier membership berdasarkan total transaksi (Rp)
+ * SILVER   : default
+ * GOLD     : >= 50.000.000
+ * PLATINUM : >= 150.000.000
+ */
+function getTierFromSpending(
+  total: number
+): "SILVER" | "GOLD" | "PLATINUM" {
+  if (total >= 150_000_000) return "PLATINUM";
+  if (total >= 50_000_000) return "GOLD";
+  return "SILVER";
 }
 
 /**
  * GET /api/admin/membership
  *
- * This endpoint computes membership tiers for all users based on the sum of
- * points recorded in the reward ledger. It accepts optional `start` and
- * `end` query parameters (ISO date strings) to restrict the calculation
- * to a specific time range. The response is an array of objects
- * containing `user_id`, `membership` and `total_points`. The logic for
- * assigning tiers is rudimentary: users with ≥1000 points are
- * PLATINUM, ≥500 points are GOLD and the rest are SILVER. Modify
- * thresholds as necessary to reflect your business rules.
+ * Mengembalikan daftar status membership semua user,
+ * berdasarkan total transaksi (sum(publish_rate)) per user.
+ *
+ * Query params (opsional):
+ *   - start: YYYY-MM-DD  → filter tanggal >= start
+ *   - end  : YYYY-MM-DD  → filter tanggal <= end
+ *
+ * Jika start & end kosong → TIDAK ada filter tanggal (semua data).
  */
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user }, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const role = (user.user_metadata as any)?.role;
-  if (role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  const url = new URL(request.url);
-  const start = url.searchParams.get('start');
-  const end = url.searchParams.get('end');
   try {
-    const adminClient = getServiceClient();
-    let query = adminClient
-      .from('reward_ledgers')
-      .select('user_id, sum(points) as total_points')
-      .group('user_id');
-    if (start) {
-      query = query.gte('created_at', start);
+    const roleHeader = request.headers.get("x-role");
+    if (!isInternalRole(roleHeader)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    if (end) {
-      query = query.lte('created_at', end);
+
+    const url = new URL(request.url);
+    const startParam = url.searchParams.get("start");
+    const endParam = url.searchParams.get("end");
+
+    const effectiveStart = startParam || null;
+    const effectiveEnd = endParam || null;
+
+    const supabase = getServiceClient();
+
+    // Ambil semua transaksi (dengan filter tanggal kalau ada)
+    let query = supabase
+      .from("transactions")
+      .select("user_id, publish_rate, date");
+
+    if (effectiveStart) {
+      query = query.gte("date", effectiveStart);
     }
+    if (effectiveEnd) {
+      query = query.lte("date", effectiveEnd);
+    }
+
     const { data, error } = await query;
+
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    // Classify membership tiers based on total points
-    const result = (data || []).map((row: any) => {
-      const totalPoints = Number(row.total_points) || 0;
-      let membership: string;
-      if (totalPoints >= 1000) {
-        membership = 'PLATINUM';
-      } else if (totalPoints >= 500) {
-        membership = 'GOLD';
-      } else {
-        membership = 'SILVER';
+
+    // Aggregasi per user_id
+    type Agg = { total: number; count: number; lastDate: string | null };
+    const totalsMap = new Map<string, Agg>();
+
+    for (const row of data || []) {
+      const r: any = row;
+      const userId = r.user_id as string | null;
+      if (!userId) continue;
+
+      const amount = Number(r.publish_rate) || 0;
+      const dateStr = r.date as string | null;
+
+      const prev: Agg = totalsMap.get(userId) ?? {
+        total: 0,
+        count: 0,
+        lastDate: null,
+      };
+
+      let lastDate = prev.lastDate;
+      if (dateStr) {
+        if (!lastDate || new Date(dateStr) > new Date(lastDate)) {
+          lastDate = dateStr;
+        }
       }
-      return { user_id: row.user_id, membership, total_points: totalPoints };
-    });
-    return NextResponse.json({ data: result }, { status: 200 });
+
+      totalsMap.set(userId, {
+        total: prev.total + amount,
+        count: prev.count + 1,
+        lastDate,
+      });
+    }
+
+    const userIds = Array.from(totalsMap.keys());
+
+    // Ambil info customer (company_name, salesname)
+    let customerMap = new Map<
+      string,
+      { company_name: string | null; salesname: string | null }
+    >();
+
+    if (userIds.length > 0) {
+      const { data: custRows, error: custError } = await supabase
+        .from("customers")
+        .select("user_id, company_name, salesname")
+        .in("user_id", userIds);
+
+      if (custError) {
+        console.error("Failed to fetch customers:", custError.message);
+      } else if (custRows) {
+        for (const c of custRows as any[]) {
+          customerMap.set(c.user_id as string, {
+            company_name: c.company_name ?? null,
+            salesname: c.salesname ?? null,
+          });
+        }
+      }
+    }
+
+    // Untuk status aktivitas, pakai endDate kalau ada, kalau tidak pakai hari ini
+    const endDateObj = effectiveEnd ? new Date(effectiveEnd) : new Date();
+
+    const result = Array.from(totalsMap.entries()).map(
+      ([user_id, agg]) => {
+        const tier = getTierFromSpending(agg.total);
+
+        let nextThreshold: number | null = null;
+        if (tier === "SILVER") nextThreshold = 50_000_000;
+        else if (tier === "GOLD") nextThreshold = 150_000_000;
+
+        const amountToNext =
+          nextThreshold !== null ? Math.max(0, nextThreshold - agg.total) : 0;
+
+        // Status aktivitas berdasarkan jeda hari dari transaksi terakhir
+        let activity_status: "ACTIVE" | "RISK" | "DORMANT" = "DORMANT";
+        if (agg.lastDate) {
+          const last = new Date(agg.lastDate);
+          const diffMs = endDateObj.getTime() - last.getTime();
+          const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+          if (diffDays <= 30) activity_status = "ACTIVE";
+          else if (diffDays <= 60) activity_status = "RISK";
+          else activity_status = "DORMANT";
+        }
+
+        const cust = customerMap.get(user_id) ?? {
+          company_name: null,
+          salesname: null,
+        };
+
+        return {
+          user_id,
+          company_name: cust.company_name,
+          salesname: cust.salesname,
+          total_spending: agg.total,
+          total_shipments: agg.count,
+          last_transaction_date: agg.lastDate,
+          tier,
+          amount_to_next_tier: amountToNext,
+          activity_status,
+        };
+      }
+    );
+
+    return NextResponse.json(
+      {
+        data: result,
+        meta: {
+          start: effectiveStart,
+          end: effectiveEnd,
+        },
+      },
+      { status: 200 }
+    );
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("GET /api/admin/membership error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }

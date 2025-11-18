@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createMiddlewareSupabaseClient } from '@supabase/auth-helpers-nextjs';
 
 /**
  * This middleware protects the dashboard and API routes under /dashboard by
@@ -11,7 +11,7 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
  */
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+  const supabase = createMiddlewareSupabaseClient({ req, res });
   const {
     data: { session },
   } = await supabase.auth.getSession();

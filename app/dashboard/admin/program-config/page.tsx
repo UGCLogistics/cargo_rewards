@@ -1,46 +1,66 @@
 "use client";
 
-"use client";
-
-import { useState, useEffect } from 'react';
-import DashboardLayout from '../../layout';
+import { useState, useEffect } from "react";
+import { useAuth } from "context/AuthContext";
 
 interface ConfigRow {
   id: number;
   key: string;
-  value: any;
+  value: string; // disimpan sebagai string JSON di UI
   created_at: string;
   updated_at: string;
 }
 
 /**
- * AdminProgramConfigPage allows administrators to view and modify
- * program configuration values stored in the `program_configs` table.
- * Each configuration entry has a unique key (e.g. `hello_discount`)
- * and a JSON value representing the settings. The page lists all
- * current configs, shows the JSON in a textarea, and lets the admin
- * update the value. When saved, a PUT request is sent to
- * `/api/admin/program-config`.
+ * AdminProgramConfigPage
+ * – Menampilkan & edit config JSON dari tabel program_configs.
  */
 export default function AdminProgramConfigPage() {
+  const { user } = useAuth();
+  const rawRole = (user?.user_metadata as any)?.role || "CUSTOMER";
+  const role = String(rawRole).toUpperCase();
+
   const [configs, setConfigs] = useState<ConfigRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
 
   const fetchConfigs = async () => {
+    if (!user) return;
+
     try {
-      const res = await fetch('/api/admin/program-config');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Gagal memuat konfigurasi');
-      // Convert each value to a JSON string for editing
-      const rows: ConfigRow[] = (json.data || []).map((cfg: any) => ({
-        ...cfg,
-        value: JSON.stringify(cfg.value, null, 2),
+      setError(null);
+      setLoading(true);
+
+      const res = await fetch("/api/admin/program-config", {
+        headers: {
+          "x-role": role,
+        },
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      let json: any = null;
+      if (contentType.includes("application/json")) {
+        json = await res.json();
+      }
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Gagal memuat konfigurasi");
+      }
+
+      const rows: ConfigRow[] = (json?.data || []).map((cfg: any) => ({
+        id: cfg.id,
+        key: cfg.key,
+        // tampilkan value sebagai pretty JSON string
+        value: JSON.stringify(cfg.value ?? {}, null, 2),
+        created_at: cfg.created_at,
+        updated_at: cfg.updated_at,
       }));
+
       setConfigs(rows);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Terjadi kesalahan saat memuat konfigurasi");
+      setConfigs([]);
     } finally {
       setLoading(false);
     }
@@ -48,65 +68,123 @@ export default function AdminProgramConfigPage() {
 
   useEffect(() => {
     fetchConfigs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, role]);
 
   const handleSave = async (key: string, valueString: string) => {
-    setSaving(true);
+    if (!user) return;
+
+    setSavingKey(key);
     try {
       let parsed;
       try {
         parsed = JSON.parse(valueString);
-      } catch (err) {
-        throw new Error('Nilai harus berupa JSON valid');
+      } catch {
+        throw new Error("Nilai harus berupa JSON valid");
       }
-      const res = await fetch('/api/admin/program-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+
+      const res = await fetch("/api/admin/program-config", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-role": role,
+        },
         body: JSON.stringify({ key, value: parsed }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Gagal menyimpan konfigurasi');
+
+      const contentType = res.headers.get("content-type") || "";
+      let json: any = null;
+      if (contentType.includes("application/json")) {
+        json = await res.json();
+      }
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Gagal menyimpan konfigurasi");
+      }
+
       await fetchConfigs();
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || "Terjadi kesalahan saat menyimpan konfigurasi");
     } finally {
-      setSaving(false);
+      setSavingKey(null);
     }
   };
 
   return (
-    <DashboardLayout>
-      <h1>Konfigurasi Program</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="space-y-4">
+      <h1 className="text-2xl md:text-3xl font-semibold text-white">
+        Konfigurasi Program
+      </h1>
+
+      {error && (
+        <p className="text-sm text-red-400 font-medium">{error}</p>
+      )}
+
       {loading ? (
-        <p>Memuat…</p>
+        <p className="text-sm text-slate-400">Memuat konfigurasi…</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div className="flex flex-col gap-3">
           {configs.map((cfg) => (
-            <div key={cfg.id} style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '1rem', background: 'rgba(255,255,255,0.05)' }}>
-              <h3 style={{ marginBottom: '0.5rem' }}>{cfg.key}</h3>
+            <div
+              key={cfg.id}
+              className="glass rounded-2xl px-4 py-3 border border-white/10"
+            >
+              {/* Header "kolom" kecil: key + timestamps */}
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">
+                    {cfg.key}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Dibuat:{" "}
+                    {new Date(cfg.created_at).toLocaleString("id-ID")} •
+                    Diupdate:{" "}
+                    {new Date(cfg.updated_at).toLocaleString("id-ID")}
+                  </p>
+                </div>
+                <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                  JSON Value
+                </span>
+              </div>
+
               <textarea
-                style={{ width: '100%', height: '6rem', marginBottom: '0.5rem', padding: '0.5rem', fontFamily: 'monospace', fontSize: '0.85rem' }}
+                className="w-full rounded-md bg-black/40 border border-white/15
+                           px-3 py-2 text-xs font-mono text-slate-100
+                           placeholder:text-slate-500 min-h-[120px]
+                           focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
                 value={cfg.value}
                 onChange={(e) => {
-                  const newConfigs = configs.map((c) =>
-                    c.id === cfg.id ? { ...c, value: e.target.value } : c
+                  const newValue = e.target.value;
+                  setConfigs((prev) =>
+                    prev.map((c) =>
+                      c.id === cfg.id ? { ...c, value: newValue } : c
+                    )
                   );
-                  setConfigs(newConfigs);
                 }}
               />
-              <button
-                onClick={() => handleSave(cfg.key, cfg.value)}
-                disabled={saving}
-                style={{ padding: '0.5rem 1rem', backgroundColor: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px' }}
-              >
-                {saving ? 'Menyimpan…' : 'Simpan'}
-              </button>
+
+              <div className="mt-2 flex justify-end">
+                <button
+                  onClick={() => handleSave(cfg.key, cfg.value)}
+                  disabled={savingKey === cfg.key}
+                  className="rounded-lg bg-[#ff4600] hover:bg-[#ff5f24]
+                             text-white text-xs font-semibold px-4 py-1.5
+                             disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {savingKey === cfg.key ? "Menyimpan…" : "Simpan"}
+                </button>
+              </div>
             </div>
           ))}
-          {configs.length === 0 && <p>Tidak ada konfigurasi. Anda dapat menambahkannya melalui Supabase SQL.</p>}
+
+          {configs.length === 0 && (
+            <p className="text-sm text-slate-200">
+              Tidak ada konfigurasi. Anda dapat menambahkannya melalui Supabase
+              SQL.
+            </p>
+          )}
         </div>
       )}
-    </DashboardLayout>
+    </div>
   );
 }

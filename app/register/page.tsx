@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import supabase from '../../lib/supabaseClient'; // kalau file ini di app/(auth)/register/, path ini biasanya benar
+import supabase from '../../lib/supabaseClient'; // sesuaikan jika path beda
 
 type AccountType = 'CUSTOMER' | 'INTERNAL';
 
@@ -30,7 +30,7 @@ export default function RegisterPage() {
     businessField: '',
     phone: '',
     address: '',
-    accountType: 'CUSTOMER',
+    accountType: 'CUSTOMER', // form ini hanya untuk CUSTOMER
   });
 
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,9 @@ export default function RegisterPage() {
     setSuccessMsg('');
 
     if (!form.picName || !form.email || !form.password || !form.companyName) {
-      setErrorMsg('Nama PIC, email, kata sandi, dan nama perusahaan wajib diisi.');
+      setErrorMsg(
+        'Nama PIC, email, kata sandi, dan nama perusahaan wajib diisi.'
+      );
       return;
     }
     if (form.password.length < 8) {
@@ -62,8 +64,8 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const userRole: 'CUSTOMER' | 'STAFF' =
-        form.accountType === 'INTERNAL' ? 'STAFF' : 'CUSTOMER';
+      // Form ini hanya untuk CUSTOMER
+      const userRole: 'CUSTOMER' | 'STAFF' = 'CUSTOMER';
 
       // 1) Daftarkan user ke Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -78,7 +80,7 @@ export default function RegisterPage() {
             tax_id: form.taxId,
             businessfield: form.businessField,
             address: form.address,
-            account_type: form.accountType,
+            account_type: 'CUSTOMER', // internal dibuat oleh admin, bukan dari form ini
           },
         },
       });
@@ -91,9 +93,35 @@ export default function RegisterPage() {
 
       const newUserId = data.user?.id;
 
-      // 2) Kalau customer → auto buat data pelanggan
-      if (newUserId && form.accountType === 'CUSTOMER') {
-        const { error: customerError } = await supabase.from('customers').insert({
+      if (!newUserId) {
+        setErrorMsg(
+          'Akun berhasil dibuat di Auth, tetapi ID user tidak tersedia. Coba cek pengaturan email konfirmasi atau hubungi admin.'
+        );
+        return;
+      }
+
+      // 2) Insert ke public.users (profil internal)
+      const { error: userInsertError } = await supabase.from('users').insert({
+        id: newUserId,                 // uuid
+        companyname: form.companyName, // kolom di tabel: companyname
+        name: form.picName,            // nama PIC
+        role: userRole,                // 'CUSTOMER'
+        status: 'ACTIVE',              // default, bisa kamu ubah nanti kalau mau ada flow approval
+      });
+
+      if (userInsertError) {
+        console.error('users insert error', userInsertError);
+        setErrorMsg(
+          'Akun berhasil dibuat, tetapi gagal menyimpan profil user: ' +
+            (userInsertError.message ?? '')
+        );
+        return;
+      }
+
+      // 3) Insert ke public.customers (profil pelanggan)
+      const { error: customerError } = await supabase
+        .from('customers')
+        .insert({
           user_id: newUserId,
           company_name: form.companyName,
           tax_id: form.taxId || null,
@@ -102,17 +130,16 @@ export default function RegisterPage() {
           phone: form.phone || null,
           email: form.email,
           address: form.address || null,
-          salesname: null,
+          salesname: null, // bisa diisi oleh admin / sales nanti
         });
 
-        if (customerError) {
-          console.error(customerError);
-          setSuccessMsg(
-            'Akun berhasil dibuat, tetapi data pelanggan belum tersimpan penuh. Mohon hubungi admin.'
-          );
-          setLoading(false);
-          return;
-        }
+      if (customerError) {
+        console.error('customers insert error', customerError);
+        setErrorMsg(
+          'Akun berhasil dibuat, tetapi data pelanggan belum tersimpan penuh: ' +
+            (customerError.message ?? '')
+        );
+        return;
       }
 
       setSuccessMsg('Akun berhasil dibuat. Mengarahkan ke halaman masuk…');
@@ -143,7 +170,8 @@ export default function RegisterPage() {
               Registrasi Pelanggan Baru
             </h1>
             <p className="text-[11px] text-slate-400 mt-1">
-              Data ini otomatis menjadi profil pelanggan di sistem loyalty UGC Logistics.
+              Data ini otomatis menjadi profil pelanggan di sistem loyalty UGC
+              Logistics.
             </p>
           </div>
 
@@ -268,7 +296,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Tipe akun */}
+            {/* Tipe akun – hanya tampil informasi, tidak ada opsi internal */}
             <div>
               <label className="block text-xs font-medium text-slate-200 mb-1">
                 Tipe akun
@@ -280,8 +308,11 @@ export default function RegisterPage() {
                 className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
               >
                 <option value="CUSTOMER">Customer / Shipper</option>
-                <option value="INTERNAL">Internal UGC (sales / staff)</option>
               </select>
+              <p className="mt-1 text-[10px] text-slate-500">
+                Akun internal UGC (sales / staff) dibuat dan divalidasi oleh admin,
+                bukan melalui form ini.
+              </p>
             </div>
 
             {/* Error / success */}

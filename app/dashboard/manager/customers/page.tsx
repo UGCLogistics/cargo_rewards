@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import DashboardLayout from '../../layout';
 
 interface CustomerRow {
   id: number;

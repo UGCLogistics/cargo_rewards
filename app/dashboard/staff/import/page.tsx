@@ -3,7 +3,6 @@
 "use client";
 
 import { useState } from 'react';
-import DashboardLayout from '../../layout';
 import * as XLSX from 'xlsx';
 
 /**
@@ -62,7 +61,7 @@ export default function StaffImportPage() {
   };
 
   return (
-    <DashboardLayout>
+    <div className="space-y-4">
       <h1>Impor Transaksi (Staff)</h1>
       <p>Unggah file CSV atau Excel dengan kolom: <code>date</code>, <code>service</code>, <code>origin</code>, <code>destination</code>, <code>publish_rate</code>, [<code>invoice_no</code>]. Semua baris akan disimpan atas nama Anda.</p>
       <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" onChange={handleFile} />
@@ -96,6 +95,6 @@ export default function StaffImportPage() {
           </button>
         </>
       )}
-    </DashboardLayout>
+    </div>
   );
 }

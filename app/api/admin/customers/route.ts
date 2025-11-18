@@ -1,87 +1,96 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from "next/server";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Helper to instantiate a Supabase client using the service role key.
- * This is required for administrative queries that must bypass RLS.
- */
-function getServiceClient() {
+function getServiceClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE;
-  if (!url || !key) throw new Error('Supabase environment variables are missing');
+  if (!url || !key) {
+    throw new Error("Supabase environment variables are missing");
+  }
   return createClient(url, key, { auth: { persistSession: false } });
+}
+
+function isInternalRole(role: unknown) {
+  if (!role) return false;
+  const r = String(role).toUpperCase();
+  return r === "ADMIN" || r === "MANAGER" || r === "STAFF";
 }
 
 /**
  * GET /api/admin/customers
- *
- * Returns a list of all customers. Only authenticated users with the
- * ADMIN role may access this endpoint. Data is returned from the
- * `public.customers` table. There is no RLS on this table by default,
- * so we use the service role client to ensure full access.
+ * Mengambil list customers.
  */
-export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const role = (user.user_metadata as any)?.role;
-  if (role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+export async function GET(request: Request) {
   try {
-    const adminClient = getServiceClient();
-    const { data, error: err } = await adminClient.from('customers').select('*').order('created_at', { ascending: false });
-    if (err) {
-      return NextResponse.json({ error: err.message }, { status: 500 });
+    const roleHeader = request.headers.get("x-role");
+    if (!isInternalRole(roleHeader)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    const adminClient = getServiceClient();
+    const { data, error } = await adminClient
+      .from("customers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
     return NextResponse.json({ data }, { status: 200 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("GET /api/admin/customers error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * POST /api/admin/customers
- *
- * Creates a new customer record. Only users with the ADMIN role may
- * create customers. The request body must include at least the
- * `company_name` field. Additional optional fields include
- * tax_id, businessfield, pic_name, phone, email, address and salesname.
- * Returns the newly created customer row on success.
+ * Menambah customer baru. Hanya ADMIN.
  */
 export async function POST(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const role = (user.user_metadata as any)?.role;
-  if (role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  const body = await request.json();
-  const {
-    company_name,
-    tax_id,
-    businessfield,
-    pic_name,
-    phone,
-    email: customer_email,
-    address,
-    salesname,
-    user_id,
-  } = body;
-  if (!company_name) {
-    return NextResponse.json({ error: 'company_name is required' }, { status: 400 });
-  }
   try {
+    const roleHeader = request.headers.get("x-role");
+    const role = String(roleHeader || "").toUpperCase();
+    if (role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
+    const {
+      company_name,
+      tax_id,
+      businessfield,
+      pic_name,
+      phone,
+      email: customer_email,
+      address,
+      salesname,
+      user_id,
+    } = body;
+
+    if (!company_name || !String(company_name).trim()) {
+      return NextResponse.json(
+        { error: "company_name is required" },
+        { status: 400 }
+      );
+    }
+
     const adminClient = getServiceClient();
-    const { data, error: err } = await adminClient
-      .from('customers')
+    const { data, error } = await adminClient
+      .from("customers")
       .insert({
         company_name,
         tax_id: tax_id || null,
@@ -93,13 +102,19 @@ export async function POST(request: Request) {
         salesname: salesname || null,
         user_id: user_id || null,
       })
-      .select('*')
+      .select("*")
       .single();
-    if (err) {
-      return NextResponse.json({ error: err.message }, { status: 500 });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
     return NextResponse.json({ data }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("POST /api/admin/customers error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Internal server error" },
+      { status: 500 }
+    );
   }
 }

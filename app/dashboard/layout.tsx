@@ -1,25 +1,55 @@
 "use client";
 
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import MembershipCard from '../../components/MembershipCard';
-import supabase from '../../lib/supabaseClient';
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useAuth } from "../../context/AuthContext";
+import supabase from "../../lib/supabaseClient";
+import type { LucideIcon } from "lucide-react";
+import {
+  Home,
+  ListChecks,
+  BadgePercent,
+  Gift,
+  User,
+  Settings,
+  Users,
+  SlidersHorizontal,
+  FileSpreadsheet,
+  Building2,
+  UserPlus,
+  ShieldCheck,
+  LineChart,
+  IdCard,
+  ClipboardList,
+  CheckCircle,
+} from "lucide-react";
 
-/**
- * The dashboard layout provides a consistent navigation bar across all
- * dashboard sub-pages. It displays the logged-in user’s email and exposes
- * links to core modules like Transaksi, Poin, Redeem, dan Admin. The
- * available links can be customized based on user.role in future
- * iterations.
- */
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, signOut } = useAuth();
-  const role = (user?.user_metadata as any)?.role || 'CUSTOMER';
+  const pathname = usePathname();
 
-  // Fetch company name for display in header. If not present in metadata, query the users table.
-  const [companyName, setCompanyName] = useState<string>('');
-  const name = user?.user_metadata?.name || user?.email || '';
+  const rawRole = (user?.user_metadata as any)?.role as string | undefined;
+  const role: Role = (rawRole ? rawRole.toUpperCase() : "CUSTOMER") as Role;
+
+  const [companyName, setCompanyName] = useState("");
+  const [collapsed, setCollapsed] = useState(false);
+
+  const name = user?.user_metadata?.name || user?.email || "";
+
+  // Ambil nama perusahaan (metadata → fallback ke tabel public.users)
   useEffect(() => {
     const getCompany = async () => {
       if (!user) return;
@@ -28,81 +58,284 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setCompanyName(metaCompany);
       } else {
         try {
-          const { data, error } = await supabase.from('users').select('companyname').eq('id', user.id).single();
-          if (!error) setCompanyName(data?.companyname || '');
+          const { data, error } = await supabase
+            .from("users")
+            .select("companyname")
+            .eq("id", user.id)
+            .single();
+          if (!error) setCompanyName(data?.companyname || "");
         } catch {
-          // ignore
+          // abaikan error kecil
         }
       }
     };
     getCompany();
   }, [user]);
-  // Build a navigation structure based on the user role. You can adjust
-  // these arrays to add or remove modules per the access matrix from
-  // the business brief. All users see Home, Transaksi, Ledger & Redeem.
-  const navItems: { href: string; label: string }[] = [
-    { href: '/dashboard', label: 'Home' },
-    { href: '/dashboard/transactions', label: 'Transaksi' },
-    { href: '/dashboard/rewards', label: 'Poin & Ledger' },
-    { href: '/dashboard/redeem', label: 'Redeem' },
-    // Account pages are available to all roles
-    { href: '/dashboard/account/info', label: 'Account Info' },
-    { href: '/dashboard/account/settings', label: 'Pengaturan Akun' },
+
+  // Item umum bagian bawah (akun)
+  const accountItems: NavItem[] = [
+    { href: "/dashboard/account/info", label: "Account Info", icon: User },
+    {
+      href: "/dashboard/account/settings",
+      label: "Pengaturan Akun",
+      icon: Settings,
+    },
   ];
-  if (role === 'ADMIN') {
-    navItems.push(
-      { href: '/dashboard/admin/users', label: 'Manajemen User' },
-      { href: '/dashboard/admin/program-config', label: 'Konfigurasi Program' },
-      { href: '/dashboard/admin/import', label: 'Impor Transaksi' },
-      // Additional administrative modules
-      { href: '/dashboard/admin/customers', label: 'Data Pelanggan' },
-      { href: '/dashboard/admin/users/create', label: 'Tambah User' },
-      { href: '/dashboard/admin/approve-redeem', label: 'Approval Redeem' },
-      { href: '/dashboard/admin/internal-kpi', label: 'Dashboard KPI Internal' },
-      { href: '/dashboard/admin/membership', label: 'Membership' },
-      { href: '/dashboard/admin/audit-logs', label: 'Audit Log' }
-    );
-  } else if (role === 'MANAGER') {
-    navItems.push(
-      // Managers have nearly the same modules as admins but without transaction import or user/customer creation
-      { href: '/dashboard/manager/approve-redeem', label: 'Approval Redeem' },
-      { href: '/dashboard/manager/internal-kpi', label: 'Dashboard KPI Internal' },
-      { href: '/dashboard/manager/program-config', label: 'Konfigurasi Program' },
-      { href: '/dashboard/manager/customers', label: 'Data Pelanggan' },
-      { href: '/dashboard/manager/membership', label: 'Membership' }
-    );
-  } else if (role === 'STAFF') {
-    navItems.push(
-      { href: '/dashboard/staff/import', label: 'Impor Transaksi' },
-      { href: '/dashboard/staff/internal-kpi', label: 'Dashboard KPI Internal' }
-    );
-  } else if (role === 'CUSTOMER') {
-    navItems.push({ href: '/dashboard/customer/external-kpi', label: 'Dashboard KPI Eksternal' });
+
+  let navItems: NavItem[] = [];
+
+  // =========================
+  // MENU PER ROLE
+  // =========================
+
+  if (role === "ADMIN") {
+    // INTERNAL – ADMIN: semua akses, TAPI TIDAK ADA REDEEM CUSTOMER DI MENU
+    navItems = [
+      {
+        href: "/dashboard/admin/internal-kpi",
+        label: "Dashboard Internal",
+        icon: Home,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "Transaksi Customer",
+        icon: ListChecks,
+      },
+      {
+        href: "/dashboard/admin/customers",
+        label: "Data Pelanggan",
+        icon: Building2,
+      },
+      {
+        href: "/dashboard/admin/membership",
+        label: "Membership",
+        icon: IdCard,
+      },
+      {
+        href: "/dashboard/admin/rewards-engine",
+        label: "Re-generate Rewards",
+        icon: CheckCircle,
+      },
+      {
+        href: "/dashboard/admin/program-config",
+        label: "Konfigurasi Program",
+        icon: SlidersHorizontal,
+      },
+      {
+        href: "/dashboard/admin/import",
+        label: "Impor Transaksi",
+        icon: FileSpreadsheet,
+      },
+      {
+        href: "/dashboard/admin/users",
+        label: "Manajemen User",
+        icon: Users,
+      },
+      {
+        href: "/dashboard/admin/users/create",
+        label: "Tambah User",
+        icon: UserPlus,
+      },
+      {
+        href: "/dashboard/admin/approve-redeem",
+        label: "Approval Redeem",
+        icon: ShieldCheck,
+      },
+      {
+        href: "/dashboard/admin/audit-logs",
+        label: "Audit Log",
+        icon: ClipboardList,
+      },
+      ...accountItems,
+    ];
+  } else if (role === "MANAGER") {
+    // INTERNAL – MANAGER: TIDAK ADA REDEEM CUSTOMER DI MENU
+    navItems = [
+      {
+        href: "/dashboard/manager/internal-kpi",
+        label: "Dashboard Internal",
+        icon: Home,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "Transaksi Customer",
+        icon: ListChecks,
+      },
+      {
+        href: "/dashboard/manager/customers",
+        label: "Data Pelanggan",
+        icon: Building2,
+      },
+      {
+        href: "/dashboard/manager/membership",
+        label: "Membership",
+        icon: IdCard,
+      },
+      {
+        href: "/dashboard/manager/program-config",
+        label: "Konfigurasi Program",
+        icon: SlidersHorizontal,
+      },
+      {
+        href: "/dashboard/manager/approve-redeem",
+        label: "Approval Redeem",
+        icon: ShieldCheck,
+      },
+      ...accountItems,
+    ];
+  } else if (role === "STAFF") {
+    // INTERNAL – STAFF: fokus ke dashboard & transaksi saja, TANPA menu redeem
+    navItems = [
+      {
+        href: "/dashboard/staff/internal-kpi",
+        label: "Dashboard Internal",
+        icon: Home,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "Transaksi Customer",
+        icon: ListChecks,
+      },
+      ...accountItems,
+    ];
+  } else {
+    // EXTERNAL – CUSTOMER: punya Riwayat Rewards & Penukaran Poin
+    navItems = [
+      {
+        href: "/dashboard/customer/external-kpi",
+        label: "Dashboard Customer",
+        icon: Home,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "Riwayat Transaksi",
+        icon: ListChecks,
+      },
+      {
+        href: "/dashboard/rewards",
+        label: "Riwayat Rewards",
+        icon: BadgePercent,
+      },
+      {
+        href: "/dashboard/redeem",
+        label: "Penukaran Poin",
+        icon: Gift,
+      },
+      ...accountItems,
+    ];
   }
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <aside className="glass" style={{ width: '240px', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-        {/* Header: UGC logo, user name and company */}
-        <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <div style={{ fontWeight: 700, fontSize: '1rem' }}>UGC LOGISTICS</div>
-          {name && <div style={{ fontSize: '0.9rem' }}>{name}</div>}
-          {companyName && <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{companyName}</div>}
+    <div className="flex min-h-screen bg-[var(--background)] text-[var(--text)]">
+      {/* SIDEBAR */}
+      <aside
+        className={`glass sticky top-0 h-screen flex flex-col shrink-0 p-3 sm:p-4 transition-all duration-300 ease-in-out ${
+          collapsed ? "w-16 sm:w-16" : "w-60 sm:w-64"
+        }`}
+      >
+        {/* Header + collapse button */}
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div
+            className={`flex flex-col ${
+              collapsed ? "items-center text-center" : "items-start"
+            }`}
+          >
+            <span className="text-[9px] font-semibold tracking-[0.25em] uppercase text-slate-400">
+              UGC
+            </span>
+            {!collapsed && (
+              <>
+                <span className="text-sm font-semibold">UGC Logistics</span>
+                {name && <span className="text-xs">{name}</span>}
+                {companyName && (
+                  <span className="text-[11px] text-slate-400">
+                    {companyName}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            className="glass border border-white/10 rounded-full w-7 h-7 flex items-center justify-center text-[11px] hover:bg-white/10"
+            aria-label={collapsed ? "Buka menu" : "Tutup menu"}
+          >
+            {collapsed ? "›" : "‹"}
+          </button>
         </div>
-        {/* Membership card below header */}
-        <MembershipCard />
-        <h2 style={{ fontSize: '1.2rem', marginTop: '1rem', marginBottom: '0.5rem' }}>Menu</h2>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flexGrow: 1 }}>
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', color: 'var(--accent)' }}>{item.label}</Link>
-          ))}
+
+        {/* Label kategori menu: INTERNAL vs CUSTOMER */}
+        <div className="mt-1 mb-1">
+          {!collapsed && (
+            <p className="px-1 text-[10px] uppercase tracking-wide text-slate-500">
+              {role === "CUSTOMER" ? "Menu Customer" : "Menu Internal"}
+            </p>
+          )}
+        </div>
+
+        {/* NAV – scrollable */}
+        <nav className="mt-1 flex-1 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const active =
+              pathname === item.href || pathname.startsWith(item.href + "/");
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
+                  flex items-center rounded-lg px-2 py-2 text-xs md:text-sm transition-colors
+                  ${
+                    collapsed
+                      ? "justify-center"
+                      : "justify-start gap-2 md:gap-3"
+                  }
+                  ${
+                    active
+                      ? "bg-[#ff4600]/15 text-[#ff4600]"
+                      : "text-slate-200 hover:bg-white/5"
+                  }
+                `}
+                aria-label={item.label}
+              >
+                <Icon
+                  className="w-4 h-4 md:w-5 md:h-5"
+                  color={active ? "#ff4600" : "#ffffff"}
+                />
+                {!collapsed && <span className="truncate">{item.label}</span>}
+              </Link>
+            );
+          })}
         </nav>
-        <div style={{ marginTop: '1rem', fontSize: '0.875rem' }}>
-          {user && <p style={{ marginBottom: '0.5rem' }}>Masuk sebagai:<br />{user.email}</p>}
-          <button onClick={async () => { await signOut(); }} style={{ width: '100%' }}>Keluar</button>
+
+        {/* Footer & Logout */}
+        <div className="pt-3 mt-3 border-t border-white/10 text-[10px] md:text-xs">
+          {!collapsed && user && (
+            <p className="mb-2 opacity-70 leading-snug">
+              Masuk sebagai:
+              <br />
+              {user.email}
+            </p>
+          )}
+          <button
+            onClick={async () => {
+              await signOut();
+            }}
+            className="w-full rounded-lg bg-[#ff4600] text-white py-2 text-[11px] md:text-xs font-semibold hover:bg-[#ff5f24] transition"
+          >
+            Keluar
+          </button>
         </div>
       </aside>
-      <main style={{ flexGrow: 1, padding: '2rem' }}>
-        {children}
+
+      {/* KONTEN */}
+      <main className="flex-1 min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          {children}
+        </div>
       </main>
     </div>
   );
