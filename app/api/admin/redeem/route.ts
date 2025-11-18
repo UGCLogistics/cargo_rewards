@@ -52,11 +52,16 @@ export async function GET(request: Request) {
 
 /**
  * PATCH /api/admin/redeem
- * Body: { id, action: "approve" | "reject", role, user_id }
+ * Body: { id, action: "approve" | "reject", user_id }
  * Hanya menerima role INTERNAL (ADMIN / MANAGER).
  */
 export async function PATCH(request: Request) {
   try {
+    const roleHeader = request.headers.get("x-role");
+    if (!isInternalRole(roleHeader)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json().catch(() => null);
     if (!body) {
       return NextResponse.json(
@@ -65,10 +70,9 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { id, action, role, user_id } = body as {
+    const { id, action, user_id } = body as {
       id: number | string;
       action: "approve" | "reject";
-      role?: string;
       user_id?: string;
     };
 
@@ -79,8 +83,11 @@ export async function PATCH(request: Request) {
       );
     }
 
-    if (!isInternalRole(role) || !user_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!user_id) {
+      return NextResponse.json(
+        { error: "Missing user_id" },
+        { status: 400 }
+      );
     }
 
     const newStatus = action === "approve" ? "APPROVED" : "REJECTED";
