@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createRouteHandlerSupabaseClient as createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 
 /**
@@ -10,7 +10,7 @@ import { createRouteHandlerSupabaseClient as createRouteHandlerClient } from '@s
  * only the caller's data is aggregated.
  */
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createRouteHandlerClient({ cookies, headers });
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   try {
     let query = supabase
       .from('transactions')
-      .select('count:id, sum(publish_rate) as total_publish_rate, sum(discount_amount) as total_discount, sum(cashback_amount) as total_cashback, sum(points_earned) as total_points');
+      .select('*', { count: 'exact' });
     if (start) query = query.gte('date', start);
     if (end) query = query.lte('date', end);
     const { data, error } = await query.single();

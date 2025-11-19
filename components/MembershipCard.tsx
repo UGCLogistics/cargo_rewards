@@ -7,7 +7,7 @@ import supabase from "../lib/supabaseClient";
 
 type Profile = {
   companyname?: string;
-  created_at?: string;
+  member_since?: string; // tanggal transaksi pertama
 };
 
 type Tier = "SILVER" | "GOLD" | "PLATINUM";
@@ -21,14 +21,6 @@ interface MembershipSummary {
 
 const POINT_VALUE_IDR = 250; // 1 poin = Rp 250
 
-/**
- * Helper: hitung tier berdasarkan total transaksi 3 bulan terakhir.
- * SILVER  : default
- * GOLD    : >= 50 juta
- * PLATINUM: >= 150 juta
- *
- * SESUAIKAN angka threshold ini dengan kebijakan program kamu.
- */
 function getTierFromSpending(totalSpending: number): Tier {
   if (totalSpending >= 150_000_000) return "PLATINUM";
   if (totalSpending >= 50_000_000) return "GOLD";
@@ -37,106 +29,146 @@ function getTierFromSpending(totalSpending: number): Tier {
 
 export default function MembershipCard() {
   const { user } = useAuth();
-  const [points, setPoints] = useState<number>(0);
+  const [points, setPoints] = useState<number>(0); // poin SISA
   const [profile, setProfile] = useState<Profile | null>(null);
   const [membership, setMembership] = useState<MembershipSummary | null>(null);
   const [exporting, setExporting] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
 
-  // metadata & role bisa dihitung walau user belum ada
   const metadata = user?.user_metadata || {};
   const rawRole = (metadata.role as string | undefined) || "CUSTOMER";
   const role = rawRole.toUpperCase();
 
-  // -----------------------------
-  // 1) Load profile (company, created_at) dari tabel users
-  // -----------------------------
+  // 1) Profile user (company & member since = transaksi pertama)
   useEffect(() => {
     if (!user) return;
 
     const loadProfile = async () => {
       try {
-        const { data, error } = await supabase
-          .from("users")
-          .select("companyname, created_at")
-          .eq("id", user.id)
-          .single();
+        const [userRes, firstTrxRes] = await Promise.all([
+          supabase
+            .from("users")
+            .select("companyname")
+            .eq("id", user.id)
+            .single(),
+          supabase
+            .from("transactions")
+            .select("date")
+            .eq("user_id", user.id)
+            .order("date", { ascending: true })
+            .limit(1),
+        ]);
 
-        if (!error) setProfile(data as Profile);
-      } catch {
-        // abaikan error kecil
+        const companyname = userRes.data?.companyname ?? undefined;
+        const member_since =
+          firstTrxRes.data && firstTrxRes.data.length > 0
+            ? firstTrxRes.data[0].date
+            : undefined;
+
+        setProfile({ companyname, member_since });
+      } catch (e) {
+        console.error("Gagal load profile:", e);
       }
     };
 
     loadProfile();
   }, [user]);
 
-  // -----------------------------
-  // 2) Load total poin customer dari reward_ledgers
-  // -----------------------------
+  // 2) Poin sisa (poin belum diredeem)
   useEffect(() => {
     if (!user) return;
 
     const loadPoints = async () => {
       try {
-        const { data, error } = await supabase
-          .from("reward_ledgers") // pastikan nama tabel ini sama persis dengan di Supabase
-          .select("points")
+        // Total poin earned dari semua transaksi
+        const { data: txData, error: txError } = await supabase
+          .from("transactions")
+          .select("points_earned")
           .eq("user_id", user.id);
 
-        if (error) throw error;
+        if (txError) throw txError;
 
-        const total =
-          (data || []).reduce(
-            (sum: number, row: any) => sum + (Number(row.points) || 0),
+        const earned =
+          (txData || []).reduce(
+            (sum: number, row: any) =>
+              sum + (Number(row.points_earned) || 0),
             0
           ) || 0;
 
-        setPoints(total);
+        // Penyesuaian / redeem dari ledger (points negatif)
+        const { data: ledgerData, error: ledgerError } = await supabase
+          .from("reward_ledgers")
+          .select("type, points")
+          .eq("user_id", user.id);
+
+        if (ledgerError) throw ledgerError;
+
+        let redeemedOrAdjust = 0;
+        for (const row of ledgerData || []) {
+          const type = (row.type || "").toUpperCase();
+          const pts = Number(row.points) || 0;
+
+          if ((type === "POINT" || type === "ADJUST") && pts < 0) {
+            redeemedOrAdjust += pts; // negatif
+          }
+        }
+
+        const remainingRaw = earned + redeemedOrAdjust;
+        const remaining = remainingRaw > 0 ? remainingRaw : 0;
+
+        setPoints(remaining);
       } catch (e) {
-        console.error("Gagal load points:", e);
+        console.error("Gagal load points tersedia:", e);
       }
     };
 
     loadPoints();
   }, [user]);
 
-  // -----------------------------
-  // 3) Hitung total transaksi 3 bulan terakhir & tier
-  //    via /api/customer/kpi/detail
-  // -----------------------------
+  // 3) Transaksi 3 bulan terakhir & tier (start = max(firstTx, today-3M))
   useEffect(() => {
     if (!user) return;
 
     const loadMembership = async () => {
       try {
+        // Cari transaksi pertama
+        const { data: firstTrx, error: firstErr } = await supabase
+          .from("transactions")
+          .select("date")
+          .eq("user_id", user.id)
+          .order("date", { ascending: true })
+          .limit(1);
+
+        if (firstErr) throw firstErr;
+
         const today = new Date();
+        const todayISO = today.toISOString().slice(0, 10);
 
-        // end = hari ini
-        const periodEnd = today.toISOString().slice(0, 10);
+        let periodStartDate = new Date(today);
+        periodStartDate.setMonth(periodStartDate.getMonth() - 3); // 3 bulan ke belakang
 
-        // start = 3 bulan ke belakang (rolling 3 bulan)
-        const startDate = new Date(today);
-        startDate.setMonth(startDate.getMonth() - 3);
-        const periodStart = startDate.toISOString().slice(0, 10);
+        if (firstTrx && firstTrx.length > 0) {
+          const firstDate = new Date(firstTrx[0].date);
+          // start = tanggal yang lebih baru antara firstDate & (today - 3 bulan)
+          if (firstDate > periodStartDate) {
+            periodStartDate = firstDate;
+          }
+        }
 
-        const params = new URLSearchParams();
-        params.set("start", periodStart);
-        params.set("end", periodEnd);
+        const periodStartISO = periodStartDate.toISOString().slice(0, 10);
 
-        const res = await fetch(
-          `/api/customer/kpi/detail?${params.toString()}`
-        );
-        if (!res.ok) return;
+        const { data, error } = await supabase
+          .from("transactions")
+          .select("publish_rate, date")
+          .eq("user_id", user.id)
+          .gte("date", periodStartISO)
+          .lte("date", todayISO);
 
-        const json = await res.json();
+        if (error) throw error;
 
-        // Diasumsikan API mengembalikan array dengan field total_publish
-        // (sum(publish_rate) as total_publish). Jika namanya berbeda,
-        // sesuaikan di reduce di bawah.
-        const totalSpending3M = (json.data || []).reduce(
+        const totalSpending3M = (data || []).reduce(
           (sum: number, row: any) =>
-            sum + (row.total_publish ?? row.total_revenue ?? 0),
+            sum + (Number(row.publish_rate) || 0),
           0
         );
 
@@ -145,30 +177,27 @@ export default function MembershipCard() {
         setMembership({
           tier,
           totalSpending3M,
-          periodStart,
-          periodEnd,
+          periodStart: periodStartISO,
+          periodEnd: todayISO,
         });
-      } catch {
-        // abaikan error kecil
+      } catch (e) {
+        console.error("Gagal load membership summary:", e);
       }
     };
 
     loadMembership();
   }, [user]);
 
-  // Kalau belum login atau bukan CUSTOMER (internal tidak punya kartu)
+  // Internal tidak punya kartu
   if (!user || role !== "CUSTOMER") {
     return null;
   }
 
-  // -----------------------------
-  // Derived display values
-  // -----------------------------
-  const name = metadata.name || user.email;
+  const name = (metadata as any).name || user.email;
   const company =
     profile?.companyname || (metadata as any).companyname || "-";
-  const memberSince = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString("id-ID", {
+  const memberSince = profile?.member_since
+    ? new Date(profile.member_since).toLocaleDateString("id-ID", {
         dateStyle: "medium",
       })
     : "-";
@@ -178,13 +207,12 @@ export default function MembershipCard() {
 
   const tierColor =
     tier === "PLATINUM"
-      ? "#e5e4e2"
+      ? "#434343ff"
       : tier === "GOLD"
       ? "#d4af37"
       : "#c0c0c0";
 
   const memberId = user.id?.substring(0, 8).toUpperCase();
-
   const pointValueIdr = points * POINT_VALUE_IDR;
 
   const periodLabel =
@@ -199,9 +227,6 @@ export default function MembershipCard() {
       year: "2-digit",
     })}`;
 
-  // -----------------------------
-  // Export kartu ke PNG
-  // -----------------------------
   const handleExport = async () => {
     if (exporting) return;
     setExporting(true);
@@ -285,7 +310,7 @@ export default function MembershipCard() {
           </div>
           <div className="space-y-1">
             <p className="text-[10px] uppercase text-slate-400">
-              Total Poin
+              Total Poin Tersedia
             </p>
             <p className="text-lg font-semibold text-[var(--accent)]">
               {points.toLocaleString("id-ID")}

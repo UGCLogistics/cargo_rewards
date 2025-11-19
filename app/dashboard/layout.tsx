@@ -23,6 +23,8 @@ import {
   IdCard,
   ClipboardList,
   CheckCircle,
+  GitGraphIcon,
+  ListFilterPlusIcon,
 } from "lucide-react";
 
 type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER";
@@ -202,9 +204,14 @@ export default function DashboardLayout({
     // EXTERNAL - CUSTOMER: punya Riwayat Rewards & Penukaran Poin
     navItems = [
       {
-        href: "/dashboard/customer/external-kpi",
+        href: "/dashboard",
         label: "Dashboard Customer",
         icon: Home,
+      },
+     {
+        href: "/dashboard/customer/external-kpi",
+        label: "Detail Performance",
+        icon: ListFilterPlusIcon,
       },
       {
         href: "/dashboard/transactions",
