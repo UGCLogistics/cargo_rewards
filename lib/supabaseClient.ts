@@ -1,9 +1,9 @@
 'use client';
 
-import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from "@/lib/supabase/client";
 
 // Versi browser client yang otomatis sinkron dengan middleware
 // dan menyimpan session di cookie (bukan cuma localStorage).
-const supabase = createBrowserSupabaseClient();
+const supabase = createClient();
 
 export default supabase;

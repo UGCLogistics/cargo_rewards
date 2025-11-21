@@ -1,6 +1,6 @@
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
-import { createRouteHandlerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
 
 type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER" | string;
@@ -39,10 +39,7 @@ function generateVoucherCode(kind: string): string {
 // GET: list redeem untuk admin (PENDING / APPROVED / PAID)
 export async function GET() {
   try {
-    const routeSupabase = createRouteHandlerSupabaseClient({
-      cookies,
-      headers,
-    });
+    const routeSupabase = createSupabaseServerClient();
 
     const {
       data: { user },
@@ -102,10 +99,7 @@ export async function GET() {
 // PATCH: approve / reject / paid
 export async function PATCH(request: Request) {
   try {
-    const routeSupabase = createRouteHandlerSupabaseClient({
-      cookies,
-      headers,
-    });
+    const routeSupabase = createSupabaseServerClient();
 
     const {
       data: { user },
