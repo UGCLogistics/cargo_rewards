@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import {
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
   getServiceClient,
   loadProgramConfigs,
   getTierFromSpending,
   addMonths,
   MembershipTier,
 } from "lib/rewardsConfig";
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 
 function isAdminRole(role: unknown) {
   const r = String(role || "").toUpperCase();

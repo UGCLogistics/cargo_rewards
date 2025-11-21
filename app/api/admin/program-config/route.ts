@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
+
+
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
 
 // Service role client (bypass RLS)
 function getServiceClient(): SupabaseClient {

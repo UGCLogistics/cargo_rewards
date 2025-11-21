@@ -3,9 +3,11 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
+
+
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
 
 function calculateHelloDiscount(publishRate: number): number {
   if (publishRate >= 15_000_000) return 0.15;

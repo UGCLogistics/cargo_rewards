@@ -2,6 +2,8 @@ import { createClient as createSupabaseServerClient } from "@/lib/supabase/serve
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 
+
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 

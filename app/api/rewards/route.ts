@@ -1,9 +1,11 @@
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // app/api/rewards/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 
 /**
