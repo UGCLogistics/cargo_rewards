@@ -15,12 +15,22 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
+import {
+  Users,
+  CreditCard,
+  Activity as ActivityIcon,
+  Clock,
+  AlertTriangle,
+  Moon,
+} from "lucide-react";
 
 type Tier = "SILVER" | "GOLD" | "PLATINUM";
 type ActivityStatus = "ACTIVE" | "PASSIVE" | "RISK" | "DORMANT";
 
 interface MembershipRow {
   user_id: string;
+  user_code: string | null;
+  company_code: string | null;
   company_name: string | null;
   salesname: string | null;
   total_spending: number;
@@ -180,7 +190,17 @@ export default function AdminMembershipPage() {
         const s = search.toLowerCase();
         const company = (m.company_name || "").toLowerCase();
         const uid = m.user_id.toLowerCase();
-        if (!company.includes(s) && !uid.includes(s)) return false;
+        const userCode = (m.user_code || "").toLowerCase();
+        const companyCode = (m.company_code || "").toLowerCase();
+
+        if (
+          !company.includes(s) &&
+          !uid.includes(s) &&
+          !userCode.includes(s) &&
+          !companyCode.includes(s)
+        ) {
+          return false;
+        }
       }
 
       return true;
@@ -248,17 +268,33 @@ export default function AdminMembershipPage() {
     .sort((a, b) => (b.total_spending || 0) - (a.total_spending || 0))
     .slice(0, 10)
     .map((m) => ({
-      name: m.company_name || m.user_id.substring(0, 8),
+      name:
+        m.company_name ||
+        m.company_code ||
+        m.user_code ||
+        m.user_id.substring(0, 8),
       tier: m.tier,
       value: m.total_spending || 0,
     }));
 
   const activityData: { status: ActivityStatus; name: string; value: number }[] =
     [
-      { status: "ACTIVE", name: ACTIVITY_LABEL.ACTIVE, value: activityAgg.ACTIVE },
-      { status: "PASSIVE", name: ACTIVITY_LABEL.PASSIVE, value: activityAgg.PASSIVE },
+      {
+        status: "ACTIVE",
+        name: ACTIVITY_LABEL.ACTIVE,
+        value: activityAgg.ACTIVE,
+      },
+      {
+        status: "PASSIVE",
+        name: ACTIVITY_LABEL.PASSIVE,
+        value: activityAgg.PASSIVE,
+      },
       { status: "RISK", name: ACTIVITY_LABEL.RISK, value: activityAgg.RISK },
-      { status: "DORMANT", name: ACTIVITY_LABEL.DORMANT, value: activityAgg.DORMANT },
+      {
+        status: "DORMANT",
+        name: ACTIVITY_LABEL.DORMANT,
+        value: activityAgg.DORMANT,
+      },
     ];
 
   return (
@@ -325,7 +361,7 @@ export default function AdminMembershipPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nama perusahaan / User ID"
+              placeholder="Nama perusahaan / Code / User ID"
               className="flex-1 rounded-md bg-black/40 border border-white/10 px-2 py-1 text-xs text-white"
             />
           </label>
@@ -374,9 +410,10 @@ export default function AdminMembershipPage() {
                 className="bg-black/40 border border-white/10 text-xs rounded-md px-2 py-1"
               >
                 <option value="ALL">Semua</option>
-                <option value="ACTIVE">Aktif (&le;30 hari)</option>
-                <option value="RISK">Risk (31-60 hari)</option>
-                <option value="DORMANT">Dormant (&gt;60 hari)</option>
+                <option value="ACTIVE">Aktif (&le;15 hari)</option>
+                <option value="PASSIVE">Pasif (16–30 hari)</option>
+                <option value="RISK">Risk (31–45 hari)</option>
+                <option value="DORMANT">Dormant (&gt;45 hari)</option>
               </select>
             </label>
           </div>
@@ -389,42 +426,107 @@ export default function AdminMembershipPage() {
       </p>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="glass rounded-xl px-4 py-3 text-xs">
-          <p className="text-slate-400">Total Member</p>
-          <p className="text-lg font-semibold text-white">
-            {totalMembers.toLocaleString("id-ID")}
-          </p>
-          <p className="text-[11px] text-slate-400">
-            {totalShipments.toLocaleString("id-ID")} shipment dalam periode
-          </p>
+      <div className="space-y-3">
+        {/* 2 kartu besar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Total Member */}
+          <div className="glass rounded-xl px-4 py-3 text-xs flex items-center justify-between">
+            <div>
+              <p className="text-slate-400">Total Member</p>
+              <p className="text-lg font-semibold text-white">
+                {totalMembers.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                {totalShipments.toLocaleString("id-ID")} shipment dalam periode.
+              </p>
+            </div>
+            <div className="p-2 rounded-full bg-white/5">
+              <Users className="w-7 h-7 text-slate-100" />
+            </div>
+          </div>
+
+          {/* Total Transaksi Periode */}
+          <div className="glass rounded-xl px-4 py-3 text-xs flex items-center justify-between">
+            <div>
+              <p className="text-slate-400">Total Transaksi Periode</p>
+              <p className="text-lg font-semibold text-white">
+                {formatIdr(totalSpending)}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Akumulasi publish rate seluruh member pada periode ini.
+              </p>
+            </div>
+            <div className="p-2 rounded-full bg-white/5">
+              <CreditCard className="w-7 h-7 text-emerald-300" />
+            </div>
+          </div>
         </div>
-        <div className="glass rounded-xl px-4 py-3 text-xs">
-          <p className="text-slate-400">Total Transaksi Periode</p>
-          <p className="text-lg font-semibold text-white">
-            {formatIdr(totalSpending)}
-          </p>
-        </div>
-        <div className="glass rounded-xl px-4 py-3 text-xs">
-          <p className="text-slate-400">Sebaran Aktivitas</p>
-          <p className="text-[11px] text-slate-300">
-            Aktif:{" "}
-            <span className="font-semibold">
-              {activityAgg.ACTIVE.toLocaleString("id-ID")}
-            </span>{" "}
-            | Pasif:{" "}
-            <span className="font-semibold">
-              {activityAgg.ACTIVE.toLocaleString("id-ID")}
-            </span>{" "}
-            | Risk:{" "}
-            <span className="font-semibold">
-              {activityAgg.RISK.toLocaleString("id-ID")}
-            </span>{" "}
-            | Dormant:{" "}
-            <span className="font-semibold">
-              {activityAgg.DORMANT.toLocaleString("id-ID")}
-            </span>
-          </p>
+
+        {/* 4 kartu kecil – sebaran aktivitas */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          {/* Active */}
+          <div className="glass rounded-xl px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-emerald-300 uppercase">
+                Aktif (&lt; 15 hari)
+              </p>
+              <p className="text-lg font-semibold text-white">
+                {activityAgg.ACTIVE.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Transaksi terakhir &lt; 15 hari yang lalu.
+              </p>
+            </div>
+            <ActivityIcon className="w-6 h-6 text-emerald-300" />
+          </div>
+
+          {/* Passive */}
+          <div className="glass rounded-xl px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-sky-300 uppercase">
+                Pasif (15–30 hari)
+              </p>
+              <p className="text-lg font-semibold text-white">
+                {activityAgg.PASSIVE.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Mulai jarang bertransaksi, perlu follow up.
+              </p>
+            </div>
+            <Clock className="w-6 h-6 text-sky-300" />
+          </div>
+
+          {/* Risk */}
+          <div className="glass rounded-xl px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-amber-300 uppercase">
+                High Risk (31–45 hari)
+              </p>
+              <p className="text-lg font-semibold text-white">
+                {activityAgg.RISK.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Beresiko dormant, butuh action segera.
+              </p>
+            </div>
+            <AlertTriangle className="w-6 h-6 text-amber-300" />
+          </div>
+
+          {/* Dormant */}
+          <div className="glass rounded-xl px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] text-red-300 uppercase">
+                Dormant (&gt; 45 hari)
+              </p>
+              <p className="text-lg font-semibold text-white">
+                {activityAgg.DORMANT.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Tidak bertransaksi &gt; 45 hari.
+              </p>
+            </div>
+            <Moon className="w-6 h-6 text-red-300" />
+          </div>
         </div>
       </div>
 
@@ -595,7 +697,9 @@ export default function AdminMembershipPage() {
                           {m.company_name || "-"}
                         </div>
                         <div className="font-mono text-[10px] text-slate-400">
-                          {m.user_id.substring(0, 8)}
+                          {m.company_code ||
+                            m.user_code ||
+                            m.user_id.substring(0, 8)}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-[11px]">

@@ -1,13 +1,9 @@
 import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { cookies, headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 
-
-
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER" | string;
 type AdminAction = "approve" | "reject" | "paid";
@@ -30,7 +26,7 @@ function generateVoucherCode(kind: string): string {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, "0");
   const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yy = String(now.getFullYear() % 100).padStart(2, "0");
+  const yy = String(now.getFullYear() % 100).toString().padStart(2, "0");
   const datePart = `${dd}${mm}${yy}`;
   const random = Math.floor(Math.random() * 1_000_000)
     .toString()
@@ -42,8 +38,8 @@ function generateVoucherCode(kind: string): string {
   return `${prefix}${datePart}${random}`;
 }
 
-// GET: list redeem untuk admin (PENDING / APPROVED / PAID)
-export async function GET() {
+// GET: list redeem untuk admin (PENDING / APPROVED / PAID / REJECTED) + filter tanggal & perusahaan
+export async function GET(request: Request) {
   try {
     const routeSupabase = createSupabaseServerClient();
 
@@ -61,9 +57,43 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const url = new URL(request.url);
+    const start = url.searchParams.get("start"); // YYYY-MM-DD
+    const end = url.searchParams.get("end"); // YYYY-MM-DD
+    const company = url.searchParams.get("company"); // nama perusahaan (partial)
+
     const supabase = getServiceClient();
 
-    const { data, error } = await supabase
+    // Jika filter nama perusahaan ada → cari dulu user_id dari tabel customers
+    let userIdFilter: string[] | null = null;
+    if (company && company.trim() !== "") {
+      const companyTrimmed = company.trim();
+
+      const { data: customers, error: custErr } = await supabase
+        .from("customers")
+        .select("user_id, company_name")
+        .ilike("company_name", `%${companyTrimmed}%`);
+
+      if (custErr) {
+        return NextResponse.json(
+          { error: custErr.message },
+          { status: 500 }
+        );
+      }
+
+      const ids = (customers || [])
+        .map((c: any) => c.user_id as string | null)
+        .filter((id): id is string => !!id);
+
+      if (ids.length === 0) {
+        // Tidak ada perusahaan yang cocok → langsung return data kosong
+        return NextResponse.json({ data: [] }, { status: 200 });
+      }
+
+      userIdFilter = ids;
+    }
+
+    let query = supabase
       .from("redemptions")
       .select(
         `
@@ -82,11 +112,28 @@ export async function GET() {
         voucher_note,
         voucher_proof_url,
         processed_at,
+        reject_reason,
         created_at
       `
       )
-      .in("status", ["PENDING", "APPROVED", "PAID"])
+      .in("status", ["PENDING", "APPROVED", "PAID", "REJECTED"])
       .order("created_at", { ascending: false });
+
+    if (start) {
+      // mulai dari jam 00:00:00
+      query = query.gte("created_at", `${start}T00:00:00`);
+    }
+
+    if (end) {
+      // sampai jam 23:59:59.999
+      query = query.lte("created_at", `${end}T23:59:59.999`);
+    }
+
+    if (userIdFilter) {
+      query = query.in("user_id", userIdFilter);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -128,12 +175,14 @@ export async function PATCH(request: Request) {
       voucher_note,
       voucher_proof_url,
       processed_at,
+      reject_reason,
     }: {
       id: number;
       action: AdminAction;
       voucher_note?: string | null;
       voucher_proof_url?: string | null;
       processed_at?: string | null;
+      reject_reason?: string | null;
     } = body || {};
 
     if (!id || !action) {
@@ -148,7 +197,9 @@ export async function PATCH(request: Request) {
     // ambil redemption
     const { data: redemption, error: fetchError } = await supabase
       .from("redemptions")
-      .select("id, user_id, kind, amount, points_used, status")
+      .select(
+        "id, user_id, kind, amount, points_used, status"
+      )
       .eq("id", id)
       .single();
 
@@ -187,7 +238,7 @@ export async function PATCH(request: Request) {
           .from("reward_ledgers")
           .insert({
             user_id: redemption.user_id,
-            type: "ADJUST", // sesuai constraint ('POINT','CREDIT','CASHBACK','ADJUST')
+            type: "ADJUST", // sesuai constraint
             amount: redemption.amount,
             points: -pointsUsed,
             ref_id: redemption.id,
@@ -212,6 +263,7 @@ export async function PATCH(request: Request) {
           approved_at: approvedAt,
           voucher_code: voucherCode,
           updated_at: approvedAt,
+          reject_reason: null,
         })
         .eq("id", id)
         .select()
@@ -246,6 +298,7 @@ export async function PATCH(request: Request) {
           approved_by: user.id,
           approved_at: nowIso,
           updated_at: nowIso,
+          reject_reason: reject_reason ?? null,
         })
         .eq("id", id)
         .select()

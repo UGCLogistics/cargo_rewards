@@ -9,11 +9,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    setInfoMsg('');
 
     if (!email || !password) {
       setErrorMsg('Email dan kata sandi wajib diisi.');
@@ -33,8 +36,33 @@ export default function LoginPage() {
       return;
     }
 
-    // Jika berhasil login → arahkan ke dashboard utama
     router.push('/dashboard');
+  };
+
+  const handleForgotPassword = async () => {
+    setErrorMsg('');
+    setInfoMsg('');
+
+    if (!email) {
+      setErrorMsg('Masukkan dulu email yang terdaftar untuk reset kata sandi.');
+      return;
+    }
+
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email /* , {
+      // redirectTo: `${window.location.origin}/reset-password`,
+    } */);
+    setResetLoading(false);
+
+    if (error) {
+      console.error(error);
+      setErrorMsg(error.message || 'Gagal mengirim email reset kata sandi.');
+      return;
+    }
+
+    setInfoMsg(
+      'Link untuk reset kata sandi sudah dikirim ke email Anda. Silakan cek inbox/spam.'
+    );
   };
 
   return (
@@ -72,7 +100,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
+            {/* Password + lupa password */}
             <div>
               <label className="block text-xs font-medium text-slate-200 mb-1">
                 Kata sandi
@@ -84,6 +112,17 @@ export default function LoginPage() {
                 placeholder="Masukkan kata sandi"
                 className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
               />
+              <div className="mt-2 flex justify-end">
+                {/* ⬇️ Tombol Lupa Password dengan style baru */}
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={resetLoading}
+                  className="text-[11px] px-3 py-1 rounded-full border border-[#ff4600] bg-white text-[#ff4600] hover:bg-[#ff4600] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {resetLoading ? 'Mengirim link reset…' : 'Lupa kata sandi?'}
+                </button>
+              </div>
             </div>
 
             {/* Error message */}
@@ -93,7 +132,14 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Button */}
+            {/* Info message */}
+            {infoMsg && (
+              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/40 px-3 py-2 text-[11px] text-emerald-300">
+                {infoMsg}
+              </div>
+            )}
+
+            {/* Button masuk */}
             <button
               type="submit"
               disabled={loading}
