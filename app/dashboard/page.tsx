@@ -5,123 +5,39 @@ import Link from "next/link";
 import { useAuth } from "context/AuthContext";
 import supabase from "lib/supabaseClient";
 import MembershipCard from "components/MembershipCard";
-
-interface KpiData {
-  total_transactions: number;
-  total_publish_rate: number;
-  total_discount: number;
-  total_cashback: number;
-  total_points: number; // poin SISA (sama dg MembershipCard)
-}
+import type { LucideIcon } from "lucide-react";
+import {
+  LineChart,
+  ListChecks,
+  Users,
+  IdCard,
+  SlidersHorizontal,
+  ShieldCheck,
+  FileSpreadsheet,
+  ClipboardList,
+  Building2,
+  User as UserIcon,
+} from "lucide-react";
 
 type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER";
+
+type Shortcut = {
+  href: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+};
 
 export default function DashboardHome() {
   const { user } = useAuth();
 
-  const [kpi, setKpi] = useState<KpiData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [company, setCompany] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const rawRole = (user?.user_metadata as any)?.role as string | undefined;
   const role: Role = (rawRole ? rawRole.toUpperCase() : "CUSTOMER") as Role;
 
-  // ===========================
-  // 1) KPI CUSTOMER
-  // ===========================
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchKpi = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        if (role === "CUSTOMER") {
-          // ---------- 1. TRANSAKSI: publish_rate, discount, points_earned ----------
-          const { data: txData, error: txError } = await supabase
-            .from("transactions")
-            .select("publish_rate, discount_amount, points_earned")
-            .eq("user_id", user.id);
-
-          if (txError) throw txError;
-
-          const txRows = txData || [];
-
-          let totalPublish = 0;
-          let totalDiscount = 0;
-          let earnedPoints = 0;
-
-          for (const row of txRows) {
-            totalPublish += Number(row.publish_rate) || 0;
-            totalDiscount += Number(row.discount_amount) || 0;
-            earnedPoints += Number(row.points_earned) || 0;
-          }
-
-          // ---------- 2. REWARD_LEDGERS: cashback + poin negatif (redeem / adjust) ----------
-          const { data: ledgerData, error: ledgerError } = await supabase
-            .from("reward_ledgers")
-            .select("type, amount, points")
-            .eq("user_id", user.id);
-
-          if (ledgerError) throw ledgerError;
-
-          let totalCashback = 0;
-          let redeemedOrAdjustPoints = 0; // negatif bila ada pengurangan poin
-
-          for (const row of ledgerData || []) {
-            const type = (row.type || "").toUpperCase();
-            const amount = Number(row.amount) || 0;
-            const pts = Number(row.points) || 0;
-
-            if (type === "CASHBACK") {
-              totalCashback += amount;
-            }
-
-            if ((type === "POINT" || type === "ADJUST") && pts < 0) {
-              redeemedOrAdjustPoints += pts;
-            }
-          }
-
-          const remainingPointsRaw = earnedPoints + redeemedOrAdjustPoints;
-          const remainingPoints =
-            remainingPointsRaw > 0 ? remainingPointsRaw : 0;
-
-          setKpi({
-            total_transactions: txRows.length,
-            total_publish_rate: totalPublish,
-            total_discount: totalDiscount,
-            total_cashback: totalCashback,
-            total_points: remainingPoints, // HARUS sama dg MembershipCard
-          });
-        } else {
-          // INTERNAL ROLE – tetap pakai API lama
-          let endpoint = "/api/customer/kpi";
-          if (role === "ADMIN") endpoint = "/api/admin/kpi";
-          else if (role === "MANAGER") endpoint = "/api/manager/kpi";
-          else if (role === "STAFF") endpoint = "/api/staff/kpi";
-
-          const res = await fetch(endpoint);
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.error || "Gagal memuat KPI");
-          setKpi(json.data);
-        }
-      } catch (err: any) {
-        console.error("Error load KPI:", err);
-        setError(err.message || "Gagal memuat KPI");
-        setKpi(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchKpi();
-  }, [user, role]);
-
-  // ===========================
-  // 2) Nama perusahaan
-  // ===========================
+  // Ambil nama perusahaan dari metadata / tabel users
   useEffect(() => {
     const fetchCompany = async () => {
       if (!user) return;
@@ -138,13 +54,17 @@ export default function DashboardHome() {
           .eq("id", user.id)
           .single();
 
-        if (!error) {
-          setCompany(data?.companyname ?? null);
+        if (error) {
+          setError("Gagal memuat data perusahaan");
+          return;
         }
+
+        setCompany(data?.companyname ?? null);
       } catch {
-        // abaikan error kecil
+        setError("Gagal memuat data perusahaan");
       }
     };
+
     fetchCompany();
   }, [user]);
 
@@ -154,132 +74,190 @@ export default function DashboardHome() {
     company || (user?.user_metadata as any)?.companyname || "-";
 
   // ===========================
-  // 3) QUICK LINKS
+  // Shortcuts untuk INTERNAL
   // ===========================
-  const quickLinks: { href: string; label: string; description: string }[] = [
-    {
-      href: "/dashboard/transactions",
-      label: "Transaksi",
-      description: "Kelola dan lihat transaksi Anda",
-    },
-    {
-      href: "/dashboard/rewards",
-      label: "Poin & Ledger",
-      description: "Lihat saldo poin dan riwayat",
-    },
-    {
-      href: "/dashboard/redeem",
-      label: "Redeem",
-      description: "Tukarkan poin Anda",
-    },
-  ];
+  let shortcuts: Shortcut[] = [];
 
-  let kpiLink = "/dashboard/customer/external-kpi";
-  if (role === "ADMIN") kpiLink = "/dashboard/admin/internal-kpi";
-  else if (role === "MANAGER") kpiLink = "/dashboard/manager/internal-kpi";
-  else if (role === "STAFF") kpiLink = "/dashboard/staff/internal-kpi";
-
-  quickLinks.push({
-    href: kpiLink,
-    label: "KPI",
-    description: "Lihat analitik kinerja",
-  });
+  if (role === "ADMIN") {
+    shortcuts = [
+      {
+        href: "/dashboard/admin/internal-kpi",
+        label: "Dashboard",
+        description: "Lihat performa program C.A.R.G.O Rewards secara global.",
+        icon: LineChart,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "History Transaksi Customer",
+        description: "Monitor dan validasi transaksi yang masuk.",
+        icon: ListChecks,
+      },
+      {
+        href: "/dashboard/admin/customers",
+        label: "Data Pelanggan",
+        description: "Kelola profil customer dan penanggung jawab.",
+        icon: Users,
+      },
+      {
+        href: "/dashboard/admin/membership",
+        label: "Membership",
+        description: "Pantau tier dan status keanggotaan pelanggan.",
+        icon: IdCard,
+      },
+      {
+        href: "/dashboard/admin/program-config",
+        label: "Konfigurasi Program",
+        description: "Atur rules diskon, cashback, dan poin.",
+        icon: SlidersHorizontal,
+      },
+      {
+        href: "/dashboard/admin/approve-redeem",
+        label: "Approval Redeem",
+        description: "Proses pengajuan redeem poin & cashback.",
+        icon: ShieldCheck,
+      },
+      {
+        href: "/dashboard/admin/import",
+        label: "Impor Transaksi",
+        description: "Upload file CSV/XLSX transaksi pelanggan.",
+        icon: FileSpreadsheet,
+      },
+      {
+        href: "/dashboard/admin/audit-logs",
+        label: "Audit Log",
+        description: "Lihat jejak perubahan & aktivitas penting.",
+        icon: ClipboardList,
+      },
+    ];
+  } else if (role === "MANAGER") {
+    shortcuts = [
+      {
+        href: "/dashboard/manager/internal-kpi",
+        label: "Dashbord",
+        description: "Ringkasan performa bisnis & rewards.",
+        icon: LineChart,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "History Transaksi Customer",
+        description: "Review transaksi & pola revenue customer.",
+        icon: ListChecks,
+      },
+      {
+        href: "/dashboard/manager/customers",
+        label: "Data Pelanggan",
+        description: "Lihat portofolio customer per sales.",
+        icon: Building2,
+      },
+      {
+        href: "/dashboard/manager/membership",
+        label: "Membership",
+        description: "Monitoring tier & aktivitas membership.",
+        icon: IdCard,
+      },
+      {
+        href: "/dashboard/manager/approve-redeem",
+        label: "Approval Redeem",
+        description: "Setujui atau tolak permintaan redeem.",
+        icon: ShieldCheck,
+      },
+      {
+        href: "/dashboard/manager/program-config",
+        label: "Konfigurasi Program",
+        description: "Sesuaikan parameter program rewards.",
+        icon: SlidersHorizontal,
+      },
+    ];
+  } else if (role === "STAFF") {
+    shortcuts = [
+      {
+        href: "/dashboard/staff/internal-kpi",
+        label: "Dashboard",
+        description: "Ringkasan performa bisnis & rewards.",
+        icon: LineChart,
+      },
+      {
+        href: "/dashboard/transactions",
+        label: "History Transaksi Customer",
+        description: "cek transaksi customer.",
+        icon: ListChecks,
+      },
+      {
+        href: "/dashboard/account/info",
+        label: "Profil Akun",
+        description: "Perbarui informasi akun dan kontak Anda.",
+        icon: UserIcon,
+      },
+    ];
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header + kartu membership */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1.1fr)] items-start">
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400">
-            C.A.R.G.O Rewards
+    <div className="space-y-4">
+      {/* HEADER (semua role) */}
+      <div className="space-y-2">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-slate-400">
+          C.A.R.G.O Rewards
+        </p>
+        <h1 className="text-xl md:text-2xl font-semibold">Hi, {name}</h1>
+        <p className="text-sm text-slate-300">{companyName}</p>
+        <p className="text-xs text-[var(--accent)]">{today}</p>
+        {error && (
+          <p className="text-xs text-red-400 mt-1">
+            {error}
           </p>
-          <h1 className="text-xl md:text-2xl font-semibold">Hi, {name}</h1>
-          <p className="text-sm text-slate-300">{companyName}</p>
-          <p className="text-xs text-[var(--accent)]">{today}</p>
-          {error && (
-            <p className="text-xs text-red-400 mt-2">{error}</p>
-          )}
-        </div>
-        <div className="glass rounded-2xl p-3 sm:p-4">
-          <MembershipCard />
-        </div>
+        )}
       </div>
 
-      {/* KPI */}
-      <section className="space-y-3">
-        <h2 className="text-sm md:text-base font-semibold">Ringkasan KPI</h2>
-        {loading || !kpi ? (
-          <p className="text-xs md:text-sm text-slate-400">
-            Memuat ringkasan KPI…
-          </p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Transaksi</span>
-              <span className="text-base md:text-lg font-semibold">
-                {kpi.total_transactions.toLocaleString("id-ID")}
-              </span>
-            </div>
-            <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Publish Rate</span>
-              <span className="text-base md:text-lg font-semibold">
-                {kpi.total_publish_rate.toLocaleString("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            </div>
-            <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Diskon</span>
-              <span className="text-base md:text-lg font-semibold">
-                {kpi.total_discount.toLocaleString("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            </div>
-            <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Cashback</span>
-              <span className="text-base md:text-lg font-semibold">
-                {kpi.total_cashback.toLocaleString("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            </div>
-            <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Poin (tersedia)</span>
-              <span className="text-base md:text-lg font-semibold">
-                {kpi.total_points.toLocaleString("id-ID")}
-              </span>
-            </div>
-          </div>
-        )}
-      </section>
+      {/* CUSTOMER: judul + kartu membership rata kiri dengan lebar dibatasi */}
+      {role === "CUSTOMER" && (
+        <section className="space-y-3">
+          <h2 className="text-sm md:text-base font-semibold">
+            Kartu Membership Digital
+          </h2>
 
-      {/* Quick links */}
-      <section className="space-y-3">
-        <h2 className="text-sm md:text-base font-semibold">Menu Utama</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {quickLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 block hover:bg-white/10 transition-colors"
-            >
-              <h3 className="text-sm md:text-base font-semibold text-[var(--accent)] mb-1">
-                {link.label}
-              </h3>
-              <p className="text-xs md:text-sm text-slate-300">
-                {link.description}
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
+          <div className="w-full max-w-4x1 md:max-w-4x1">
+            <MembershipCard />
+          </div>
+        </section>
+      )}
+
+      {/* INTERNAL ROLES: shortcut cards */}
+      {role !== "CUSTOMER" && shortcuts.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-sm md:text-base font-semibold">
+            Shortcut Utama
+          </h2>
+          <p className="text-xs md:text-sm text-slate-400 max-w-2xl">
+            Akses cepat ke modul yang paling sering digunakan sesuai peran
+            Anda di program C.A.R.G.O Rewards.
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {shortcuts.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex items-start gap-3 hover:bg-white/10 transition-colors"
+                >
+                  <div className="mt-1">
+                    <Icon className="w-5 h-5 md:w-6 md:h-6 text-[var(--accent)]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm md:text-base font-semibold mb-1">
+                      {item.label}
+                    </h3>
+                    <p className="text-xs md:text-sm text-slate-300">
+                      {item.description}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

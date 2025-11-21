@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createRouteHandlerSupabaseClient as createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
 
@@ -16,7 +16,7 @@ function getServiceClient() {
  * caller to have MANAGER or ADMIN role.
  */
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = createRouteHandlerClient({ headers, cookies });
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -32,9 +32,8 @@ export async function GET(request: Request) {
     const adminClient = getServiceClient();
     let query = adminClient
       .from('transactions')
-      .select('date, count:id, sum(publish_rate) as total_publish_rate, sum(discount_amount) as total_discount, sum(cashback_amount) as total_cashback, sum(points_earned) as total_points')
-      .group('date')
-      .order('date');
+      .select('date, id.count(), publish_rate.sum(), discount_amount.sum(), cashback_amount.sum(), points_earned.sum()')
+      .order('date', { ascending: true });
     if (start) query = query.gte('date', start);
     if (end) query = query.lte('date', end);
     const { data, error } = await query;

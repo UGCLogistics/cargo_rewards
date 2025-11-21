@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { useAuth } from "context/AuthContext";
 
 interface CustomerRow {
   id: number;
@@ -15,25 +16,52 @@ interface CustomerRow {
   created_at: string;
 }
 
-/**
- * ManagerCustomersPage lists all registered customers for managers. It
- * does not provide a form to create new customers; managers may only
- * view customer details. Data is fetched from `/api/manager/customers`.
- */
-export default function ManagerCustomersPage() {
+export default function AdminCustomersPage() {
+  const { user } = useAuth();
+  const rawRole = (user?.user_metadata as any)?.role || "CUSTOMER";
+  const role = String(rawRole).toUpperCase();
+
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const [form, setForm] = useState({
+    company_name: "",
+    tax_id: "",
+    businessfield: "",
+    pic_name: "",
+    phone: "",
+    email: "",
+    address: "",
+    salesname: "",
+  });
 
   const fetchCustomers = async () => {
-    setLoading(true);
+    if (!user) return;
+
     try {
-      const res = await fetch('/api/manager/customers');
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Gagal memuat pelanggan');
-      setCustomers(json.data || []);
+      setError(null);
+      const res = await fetch("/api/admin/customers", {
+        headers: {
+          "x-role": role,
+        },
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      let json: any = null;
+      if (contentType.includes("application/json")) {
+        json = await res.json();
+      }
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Gagal memuat pelanggan");
+      }
+
+      setCustomers((json?.data as CustomerRow[]) || []);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Terjadi kesalahan saat memuat pelanggan");
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
@@ -41,45 +69,236 @@ export default function ManagerCustomersPage() {
 
   useEffect(() => {
     fetchCustomers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, role]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.company_name.trim()) {
+      alert("Nama perusahaan harus diisi");
+      return;
+    }
+    if (!user) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-role": role,
+        },
+        body: JSON.stringify(form),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      let json: any = null;
+      if (contentType.includes("application/json")) {
+        json = await res.json();
+      }
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Gagal menambah pelanggan");
+      }
+
+      setForm({
+        company_name: "",
+        tax_id: "",
+        businessfield: "",
+        pic_name: "",
+        phone: "",
+        email: "",
+        address: "",
+        salesname: "",
+      });
+
+      await fetchCustomers();
+    } catch (err: any) {
+      alert(err.message || "Terjadi kesalahan saat menambah pelanggan");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <DashboardLayout>
-      <h1>Data Pelanggan</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {loading ? (
-        <p>Memuat…</p>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>ID</th>
-              <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>Perusahaan</th>
-              <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>PIC</th>
-              <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>Telepon</th>
-              <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>Email</th>
-              <th style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>Sales</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((c) => (
-              <tr key={c.id}>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)', fontSize: '0.8rem' }}>{c.id}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>{c.company_name}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>{c.pic_name || '-'}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>{c.phone || '-'}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>{c.email || '-'}</td>
-                <td style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>{c.salesname || '-'}</td>
-              </tr>
-            ))}
-            {customers.length === 0 && (
-              <tr>
-                <td colSpan={6} style={{ padding: '1rem', textAlign: 'center' }}>Tidak ada pelanggan terdaftar</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+    <div className="space-y-6">
+      {/* Header */}
+      <header>
+        <h1 className="text-2xl md:text-3xl font-semibold text-white">
+          Data Pelanggan
+        </h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Daftar seluruh pelanggan yang terdaftar di program C.A.R.G.O Rewards.
+        </p>
+      </header>
+
+      {/* Error */}
+      {error && (
+        <div className="glass border border-red-500/40 text-red-200 text-sm px-4 py-3 rounded-xl">
+          {error}
+        </div>
       )}
-    </DashboardLayout>
+
+      {/* Tabel pelanggan */}
+      <section className="glass rounded-2xl px-4 py-4">
+        <h2 className="text-sm font-semibold text-white mb-3">
+          Daftar Pelanggan
+        </h2>
+
+        {loading ? (
+          <p className="text-sm text-slate-400">Memuat data pelanggan…</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-xs text-slate-200">
+              <thead>
+                <tr className="border-b border-white/10 text-[11px] text-slate-400">
+                  <th className="px-3 py-2 text-left">ID</th>
+                  <th className="px-3 py-2 text-left">Perusahaan</th>
+                  <th className="px-3 py-2 text-left">PIC</th>
+                  <th className="px-3 py-2 text-left">Telepon</th>
+                  <th className="px-3 py-2 text-left">Email</th>
+                  <th className="px-3 py-2 text-left">Sales</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-4 text-center text-slate-400"
+                    >
+                      Belum ada pelanggan terdaftar
+                    </td>
+                  </tr>
+                )}
+                {customers.map((c) => (
+                  <tr
+                    key={c.id}
+                    className="border-b border-white/5 hover:bg-white/5"
+                  >
+                    <td className="px-3 py-2 text-[11px] text-slate-400">
+                      {c.id}
+                    </td>
+                    <td className="px-3 py-2">{c.company_name}</td>
+                    <td className="px-3 py-2">{c.pic_name || "-"}</td>
+                    <td className="px-3 py-2">{c.phone || "-"}</td>
+                    <td className="px-3 py-2">{c.email || "-"}</td>
+                    <td className="px-3 py-2">{c.salesname || "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Form tambah pelanggan */}
+      <section className="glass rounded-2xl px-4 py-4 space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-sm font-semibold text-white">
+            Tambah Pelanggan
+          </h2>
+          <span className="text-[11px] text-slate-400">
+            Isi minimal nama perusahaan. Field lain opsional.
+          </span>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-3 md:grid-cols-4 items-start"
+        >
+          <input
+            type="text"
+            placeholder="Nama perusahaan*"
+            value={form.company_name}
+            onChange={(e) =>
+              setForm({ ...form, company_name: e.target.value })
+            }
+            required
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+          <input
+            type="text"
+            placeholder="NPWP / Tax ID"
+            value={form.tax_id}
+            onChange={(e) => setForm({ ...form, tax_id: e.target.value })}
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+          <input
+            type="text"
+            placeholder="Bidang usaha"
+            value={form.businessfield}
+            onChange={(e) =>
+              setForm({ ...form, businessfield: e.target.value })
+            }
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+          <input
+            type="text"
+            placeholder="PIC name"
+            value={form.pic_name}
+            onChange={(e) => setForm({ ...form, pic_name: e.target.value })}
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+
+          <input
+            type="text"
+            placeholder="Telepon"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+          <input
+            type="text"
+            placeholder="Alamat"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+          <input
+            type="text"
+            placeholder="Sales name"
+            value={form.salesname}
+            onChange={(e) => setForm({ ...form, salesname: e.target.value })}
+            className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                       text-xs md:text-sm text-white placeholder:text-slate-500
+                       focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+          />
+
+          <div className="md:col-span-4 flex justify-end mt-1">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full md:w-auto rounded-lg bg-[#ff4600] hover:bg-[#ff5f24]
+                         text-white text-xs md:text-sm font-semibold px-6 py-2
+                         disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {saving ? "Menyimpan…" : "Tambah Pelanggan"}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
   );
 }

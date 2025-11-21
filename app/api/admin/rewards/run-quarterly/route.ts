@@ -1,4 +1,3 @@
-// app/api/admin/rewards/run-quarterly/route.ts
 import { NextResponse } from "next/server";
 import {
   getServiceClient,
@@ -9,58 +8,106 @@ import {
 } from "lib/rewardsConfig";
 
 function isAdminRole(role: unknown) {
-  if (!role) return false;
-  return String(role).toUpperCase() === "ADMIN";
+  const r = String(role || "").toUpperCase();
+  return r === "ADMIN" || r === "INTERNAL";
 }
 
 type TxRow = {
   id: number;
   user_id: string;
-  date: string; // YYYY-MM-DD
+  date: string; // 'YYYY-MM-DD'
   publish_rate: number;
   points_earned: number | null;
 };
 
-type QuarterInfo = {
-  year: number;
-  quarter: number;
-  totalSpending: number;
+type BarePeriod = {
+  index: number;       // 1 = periode pertama (Q1), dst
+  start: string;       // 'YYYY-MM-DD'
+  end: string;         // 'YYYY-MM-DD' (exclusive)
+  totalSpending: number; // spending DI periode ini (bukan prev)
 };
 
-function getQuarterFromDate(dateStr: string): { year: number; quarter: number } {
-  const d = new Date(dateStr + "T00:00:00.000Z");
-  const year = d.getUTCFullYear();
-  const month = d.getUTCMonth(); // 0-11
-  const quarter = Math.floor(month / 3) + 1; // 1-4
-  return { year, quarter };
-}
-
-function quarterKey(year: number, quarter: number): string {
-  return `${year}-Q${quarter}`;
-}
-
-function compareYearQuarter(
-  a: { year: number; quarter: number },
-  b: { year: number; quarter: number }
-): number {
-  if (a.year !== b.year) return a.year - b.year;
-  return a.quarter - b.quarter;
-}
-
-function getQuarterStart(year: number, quarter: number): Date {
-  const monthIndex = (quarter - 1) * 3; // 0,3,6,9
-  return new Date(Date.UTC(year, monthIndex, 1));
-}
+type PeriodCalc = {
+  index: number;                 // 1 = Q1, dst
+  start: string;
+  end: string;
+  totalSpendingPrev: number;     // spending periode SEBELUMNYA
+  prevPeriodStart: string | null;
+  prevPeriodEnd: string | null;
+  tier: MembershipTier;
+  status: "CURRENT" | "PREVIOUS" | "PAST";
+};
 
 function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Bangun daftar periode 3 bulanan per user,
+ * anchor di first transaction date.
+ *
+ * Contoh:
+ * firstDate = 2025-01-02
+ * -> [2025-01-02, 2025-04-02)
+ * -> [2025-04-02, 2025-07-02)
+ * -> [2025-07-02, 2025-10-02)
+ * -> [2025-10-02, 2026-01-02)  (kalau today masih di range ini)
+ */
+function buildBarePeriods(firstDateStr: string, today: Date, txs: TxRow[]): BarePeriod[] {
+  const firstDate = new Date(firstDateStr + "T00:00:00.000Z");
+  const todayStr = toDateStr(today);
+
+  const periods: BarePeriod[] = [];
+  let index = 1;
+  let startDate = firstDate;
+
+  // Loop maksimal 40 periode (10 tahun) biar aman
+  for (let safety = 0; safety < 40; safety++) {
+    const endDate = addMonths(startDate, 3);
+    const startStr = toDateStr(startDate);
+    const endStr = toDateStr(endDate);
+
+    // Hitung spending di periode ini
+    let totalSpending = 0;
+    for (const tx of txs) {
+      if (!tx.date) continue;
+      if (tx.date >= startStr && tx.date < endStr) {
+        totalSpending += tx.publish_rate || 0;
+      }
+    }
+
+    periods.push({
+      index,
+      start: startStr,
+      end: endStr,
+      totalSpending,
+    });
+
+    // Kalau today masih di dalam periode ini, ini adalah "current period"
+    // dan kita berhenti di sini.
+    if (todayStr >= startStr && todayStr < endStr) {
+      break;
+    }
+
+    // Kalau today di masa depan setelah endStr, lanjut periode berikutnya
+    startDate = endDate;
+    index += 1;
+
+    // Kalau start sudah lewat jauh dari today, break aja
+    if (startStr > todayStr) break;
+  }
+
+  return periods;
 }
 
 export async function POST(request: Request) {
   try {
     const roleHeader = request.headers.get("x-role");
     if (!isAdminRole(roleHeader)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
+      );
     }
 
     const supabase = getServiceClient();
@@ -71,14 +118,14 @@ export async function POST(request: Request) {
 
     if (!membershipTiersCfg) {
       return NextResponse.json(
-        { error: "membership_tiers config not found" },
+        { error: "Membership tiers config tidak ditemukan" },
         { status: 500 }
       );
     }
 
-    if (!pointsCfg || pointsCfg.enabled === false) {
+    if (!pointsCfg) {
       return NextResponse.json(
-        { error: "points_config disabled or missing" },
+        { error: "Points config tidak ditemukan" },
         { status: 500 }
       );
     }
@@ -87,20 +134,23 @@ export async function POST(request: Request) {
     const multipliers = pointsCfg.multipliers_by_membership || {};
 
     const today = new Date();
-    const todayStr = toDateStr(today);
 
-    // 1) Ambil semua transaksi
-    const { data: txs, error: txErr } = await supabase
+    // 1. Ambil semua transaksi (urut per user, lalu per tanggal)
+    const { data: txData, error: txError } = await supabase
       .from("transactions")
       .select("id, user_id, date, publish_rate, points_earned")
       .order("user_id", { ascending: true })
       .order("date", { ascending: true });
 
-    if (txErr) {
-      return NextResponse.json({ error: txErr.message }, { status: 500 });
+    if (txError) {
+      console.error("Error load transactions:", txError);
+      return NextResponse.json(
+        { error: "Gagal load transaksi" },
+        { status: 500 }
+      );
     }
 
-    const allTx: TxRow[] = (txs || []).map((t: any) => ({
+    const allTx: TxRow[] = (txData || []).map((t: any) => ({
       id: t.id,
       user_id: t.user_id,
       date: t.date,
@@ -108,279 +158,306 @@ export async function POST(request: Request) {
       points_earned: t.points_earned,
     }));
 
-    // Kalau belum ada transaksi sama sekali, langsung keluar
     if (allTx.length === 0) {
       return NextResponse.json(
-        {
-          message: "Tidak ada transaksi untuk diproses.",
-          membershipPeriodsCreated: 0,
-          transactionsPointed: 0,
-        },
+        { message: "Tidak ada transaksi, tidak ada yang diproses." },
         { status: 200 }
       );
     }
 
-    // 2) Agregasi spending per user per quarter (calendar quarter)
-    const userQuarterTotals = new Map<string, Map<string, QuarterInfo>>();
-    const userIdsSet = new Set<string>();
-
+    // Group by user
+    const txByUser = new Map<string, TxRow[]>();
     for (const tx of allTx) {
       if (!tx.user_id || !tx.date) continue;
-      userIdsSet.add(tx.user_id);
-
-      const { year, quarter } = getQuarterFromDate(tx.date);
-      const qKey = quarterKey(year, quarter);
-
-      let qMap = userQuarterTotals.get(tx.user_id);
-      if (!qMap) {
-        qMap = new Map<string, QuarterInfo>();
-        userQuarterTotals.set(tx.user_id, qMap);
+      if (!txByUser.has(tx.user_id)) {
+        txByUser.set(tx.user_id, []);
       }
-
-      let qInfo = qMap.get(qKey);
-      if (!qInfo) {
-        qInfo = { year, quarter, totalSpending: 0 };
-        qMap.set(qKey, qInfo);
-      }
-
-      qInfo.totalSpending += tx.publish_rate;
+      txByUser.get(tx.user_id)!.push(tx);
     }
 
-    const userIds = Array.from(userIdsSet);
-
-    // 3) Ambil membership_periods yang sudah ada untuk tahu quarter terakhir per user
-    const { data: existingPeriods, error: existingPeriodErr } = await supabase
+    // 2. Ambil existing membership_periods (buat deteksi upsert vs insert)
+    const { data: mpData, error: mpError } = await supabase
       .from("membership_periods")
-      .select("user_id, period_start, period_end, tier, total_spending");
+      .select("id, user_id, period_start, period_end");
 
-    if (existingPeriodErr) {
+    if (mpError) {
+      console.error("Error load membership_periods:", mpError);
       return NextResponse.json(
-        { error: existingPeriodErr.message },
+        { error: "Gagal load membership_periods" },
         { status: 500 }
       );
     }
 
-    type PeriodRow = {
-      user_id: string;
-      period_start: string;
-      period_end: string;
-      tier: string | null;
-      total_spending: number | null;
-    };
+    type ExistingKey = string;
+    const existingByKey = new Map<ExistingKey, number>(); // key -> id
 
-    const latestQuarterByUser = new Map<string, { year: number; quarter: number }>();
-
-    for (const p of (existingPeriods || []) as PeriodRow[]) {
-      if (!p.user_id || !p.period_start) continue;
-
-      // Hanya pakai periode yg benar-benar quarter calendar:
-      const d = new Date(p.period_start + "T00:00:00.000Z");
-      const m = d.getUTCMonth();
-      const day = d.getUTCDate();
-      const isQuarterStart =
-        day === 1 && (m === 0 || m === 3 || m === 6 || m === 9);
-
-      if (!isQuarterStart) {
-        // Ini biasanya periode 3 bulan pertama khusus (run-initial) → abaikan
-        continue;
-      }
-
-      const { year, quarter } = getQuarterFromDate(p.period_start);
-      const current = latestQuarterByUser.get(p.user_id);
-      if (!current || compareYearQuarter({ year, quarter }, current) > 0) {
-        latestQuarterByUser.set(p.user_id, { year, quarter });
-      }
+    for (const row of mpData || []) {
+      if (!row.user_id || !row.period_start || !row.period_end) continue;
+      const key = `${row.user_id}|${row.period_start}|${row.period_end}`;
+      existingByKey.set(key, row.id);
     }
 
-    // 4) Hitung membership period per quarter dan upsert HANYA untuk quarter yang:
-    //    - sudah selesai (period_end <= today)
-    //    - setelah quarter terakhir yang sudah diproses untuk user tsb
     let membershipPeriodsCreated = 0;
-
-    for (const [userId, qMap] of userQuarterTotals.entries()) {
-      const quarters = Array.from(qMap.values()).sort(
-        (a, b) => a.year - b.year || a.quarter - b.quarter
-      );
-
-      if (quarters.length === 0) continue;
-
-      // Hitung tier & referenceTotal per quarter (berdasarkan spending quarter sebelumnya)
-      type QCalc = QuarterInfo & {
-        refTotal: number;
-        tier: MembershipTier;
-      };
-
-      const qCalcs: QCalc[] = quarters.map((q) => ({
-        ...q,
-        refTotal: 0,
-        tier: "SILVER" as MembershipTier,
-      }));
-
-      let prevTotal = 0;
-      for (let i = 0; i < qCalcs.length; i++) {
-        const tier = getTierFromSpending(prevTotal, membershipTiersCfg);
-        qCalcs[i].refTotal = prevTotal;
-        qCalcs[i].tier = tier;
-        prevTotal = qCalcs[i].totalSpending;
-      }
-
-      const lastQ = latestQuarterByUser.get(userId);
-
-      for (const qc of qCalcs) {
-        const startDate = getQuarterStart(qc.year, qc.quarter);
-        const endDate = addMonths(startDate, 3);
-        const periodStartStr = toDateStr(startDate);
-        const periodEndStr = toDateStr(endDate);
-
-        // Quarter belum selesai → tidak perlu diproses sekarang
-        if (periodEndStr > todayStr) {
-          // quarter sesudahnya pasti juga belum selesai, jadi boleh break
-          break;
-        }
-
-        // Kalau sudah pernah diproses quarter ini atau sesudahnya → lewati
-        if (lastQ && compareYearQuarter(qc, lastQ) <= 0) {
-          continue;
-        }
-
-        // Upsert membership_period baru untuk quarter ini
-        const { error: upErr } = await supabase
-          .from("membership_periods")
-          .upsert(
-            {
-              user_id: userId,
-              period_start: periodStartStr,
-              period_end: periodEndStr,
-              tier: qc.tier,
-              total_spending: qc.refTotal, // spending quarter sebelumnya
-            },
-            { onConflict: "user_id,period_start,period_end" }
-          );
-
-        if (upErr) {
-          return NextResponse.json(
-            { error: upErr.message },
-            { status: 500 }
-          );
-        }
-
-        membershipPeriodsCreated += 1;
-      }
-    }
-
-    // 5) Ambil membership_periods lagi (sudah termasuk quarter yang baru dibuat)
-    const { data: periods, error: periodErr } = await supabase
-      .from("membership_periods")
-      .select("user_id, period_start, period_end, tier, total_spending");
-
-    if (periodErr) {
-      return NextResponse.json(
-        { error: periodErr.message },
-        { status: 500 }
-      );
-    }
-
-    type Period = {
-      period_start: string;
-      period_end: string;
-      tier: MembershipTier;
-      total_spending: number;
-    };
-
-    const periodsByUser = new Map<string, Period[]>();
-
-    for (const p of periods || []) {
-      if (!p.user_id || !p.period_start || !p.period_end) continue;
-
-      // hanya pakai periode yang benar-benar quarter (start tgl 1, bulan 0/3/6/9)
-      const d = new Date(p.period_start + "T00:00:00.000Z");
-      const m = d.getUTCMonth();
-      const day = d.getUTCDate();
-      const isQuarterStart =
-        day === 1 && (m === 0 || m === 3 || m === 6 || m === 9);
-
-      if (!isQuarterStart) continue; // abaikan periode non-kalender (run-initial)
-
-      const arr = periodsByUser.get(p.user_id) || [];
-      arr.push({
-        period_start: p.period_start,
-        period_end: p.period_end,
-        tier: (p.tier as MembershipTier) || "SILVER",
-        total_spending: Number(p.total_spending) || 0,
-      });
-      periodsByUser.set(p.user_id, arr);
-    }
-
-    // Sort periode per user berdasarkan start date
-    for (const [uid, arr] of periodsByUser.entries()) {
-      arr.sort((a, b) =>
-        a.period_start < b.period_start ? -1 : a.period_start > b.period_start ? 1 : 0
-      );
-      periodsByUser.set(uid, arr);
-    }
-
-    // 6) Hitung poin untuk tiap transaksi yang belum punya poin
+    let membershipPeriodsUpdated = 0;
     let transactionsPointed = 0;
 
+    // 3. Bangun periode 3 bulanan anchored per user + upsert membership_periods
+    const periodsByUserForPoints = new Map<string, PeriodCalc[]>();
+
+    for (const [userId, userTxs] of txByUser.entries()) {
+      if (!userTxs || userTxs.length === 0) continue;
+
+      const firstDateStr = userTxs[0].date;
+      if (!firstDateStr) continue;
+
+      const barePeriods = buildBarePeriods(firstDateStr, today, userTxs);
+      if (barePeriods.length === 0) continue;
+
+      const lastIndex = barePeriods.length - 1;
+
+      const userPeriodsCalc: PeriodCalc[] = [];
+
+      for (let i = 0; i < barePeriods.length; i++) {
+        const b = barePeriods[i];
+        const prev = i > 0 ? barePeriods[i - 1] : null;
+
+        // Spending periode sebelumnya:
+        const totalSpendingPrev = prev ? prev.totalSpending : 0;
+
+        // Tier buat periode ini = fungsi(spending periode sebelumnya)
+        const tier = getTierFromSpending(totalSpendingPrev, membershipTiersCfg) as MembershipTier;
+
+        let status: "CURRENT" | "PREVIOUS" | "PAST" = "PAST";
+        if (i === lastIndex) status = "CURRENT";
+        else if (i === lastIndex - 1) status = "PREVIOUS";
+
+        userPeriodsCalc.push({
+          index: b.index,
+          start: b.start,
+          end: b.end,
+          totalSpendingPrev,
+          prevPeriodStart: prev ? prev.start : null,
+          prevPeriodEnd: prev ? prev.end : null,
+          tier,
+          status,
+        });
+      }
+
+      // Simpan buat step hitung poin
+      periodsByUserForPoints.set(userId, userPeriodsCalc);
+
+      // Upsert ke membership_periods
+      for (const p of userPeriodsCalc) {
+        const key = `${userId}|${p.start}|${p.end}`;
+        const existingId = existingByKey.get(key);
+
+        // Payload:
+        // Catatan:
+        //  - Untuk periode ke-1 (Q1):
+        //      - KITA TIDAK MENYENTUH total_spending & tier kalau sudah ada row dari run-initial
+        //      - Kita cuma update period_index/label/prev_* dan status
+        //  - Untuk periode >=2:
+        //      - total_spending = spending periode sebelumnya (p.totalSpendingPrev)
+        //      - tier = tier yang dipakai di periode ini
+        const isFirstPeriod = p.index === 1;
+
+        if (existingId) {
+          // UPDATE
+          if (isFirstPeriod) {
+            // JANGAN utak-atik total_spending & tier yang sudah di-set run-initial
+            const { error: updErr } = await supabase
+              .from("membership_periods")
+              .update({
+                period_index: p.index,
+                period_label: `Q${p.index}`,
+                prev_period_start: p.prevPeriodStart,
+                prev_period_end: p.prevPeriodEnd,
+                current_membership_status: p.status,
+                // prev_period_total_spending tetap alias ke total_spending existing
+              })
+              .eq("id", existingId);
+
+            if (updErr) {
+              console.error("Error update membership_periods (Q1):", updErr);
+              return NextResponse.json(
+                { error: "Gagal update membership_periods (periode pertama)" },
+                { status: 500 }
+              );
+            }
+            membershipPeriodsUpdated += 1;
+          } else {
+            // Periode >=2 – boleh update total_spending = spending periode sebelumnya
+            const { error: updErr } = await supabase
+              .from("membership_periods")
+              .update({
+                period_index: p.index,
+                period_label: `Q${p.index}`,
+                period_start: p.start,
+                period_end: p.end,
+                total_spending: p.totalSpendingPrev,
+                prev_period_start: p.prevPeriodStart,
+                prev_period_end: p.prevPeriodEnd,
+                // prev_period_total_spending = alias ke total_spending
+                tier: p.tier,
+                current_membership_status: p.status,
+              })
+              .eq("id", existingId);
+
+            if (updErr) {
+              console.error("Error update membership_periods:", updErr);
+              return NextResponse.json(
+                { error: "Gagal update membership_periods" },
+                { status: 500 }
+              );
+            }
+            membershipPeriodsUpdated += 1;
+          }
+        } else {
+          // INSERT
+          if (isFirstPeriod) {
+            // Kalau belum ada row Q1 (run-initial belum pernah jalan),
+            // kita bikin row Q1 penuh dengan total_spending & tier berdasarkan spending Q1.
+            const firstPeriod = barePeriods[0];
+            const totalSpendingQ1 = firstPeriod.totalSpending;
+            const tierQ1 = getTierFromSpending(
+              totalSpendingQ1,
+              membershipTiersCfg
+            ) as MembershipTier;
+
+            const { error: insErr } = await supabase
+              .from("membership_periods")
+              .insert({
+                user_id: userId,
+                period_start: firstPeriod.start,
+                period_end: firstPeriod.end,
+                total_spending: totalSpendingQ1,
+                // prev period = null
+                prev_period_start: null,
+                prev_period_end: null,
+                // prev_period_total_spending = alias ke total_spending
+                tier: tierQ1,
+                period_index: 1,
+                period_label: "Q1",
+                current_membership_status: p.status,
+              });
+
+            if (insErr) {
+              console.error("Error insert membership_periods (Q1):", insErr);
+              return NextResponse.json(
+                { error: "Gagal insert membership_periods (periode pertama)" },
+                { status: 500 }
+              );
+            }
+            membershipPeriodsCreated += 1;
+          } else {
+            // Periode >=2
+            const { error: insErr } = await supabase
+              .from("membership_periods")
+              .insert({
+                user_id: userId,
+                period_start: p.start,
+                period_end: p.end,
+                total_spending: p.totalSpendingPrev, // SPENDING PERIODE SEBELUMNYA
+                prev_period_start: p.prevPeriodStart,
+                prev_period_end: p.prevPeriodEnd,
+                // prev_period_total_spending = alias ke total_spending
+                tier: p.tier,
+                period_index: p.index,
+                period_label: `Q${p.index}`,
+                current_membership_status: p.status,
+              });
+
+            if (insErr) {
+              console.error("Error insert membership_periods:", insErr);
+              return NextResponse.json(
+                { error: "Gagal insert membership_periods" },
+                { status: 500 }
+              );
+            }
+            membershipPeriodsCreated += 1;
+          }
+        }
+      }
+    }
+
+    // 4. Hitung ulang poin berdasarkan periode anchored ini
+    //    - transaction di periode index=1 (Q1) TIDAK dapat poin
+    //    - transaction di periode index>=2 dapat poin kalau total_spending (prevPeriod) > 0
+    const periodsForPoints = new Map<
+      string,
+      { start: string; end: string; tier: MembershipTier; period_index: number; total_spending: number }[]
+    >();
+
+    for (const [userId, list] of periodsByUserForPoints.entries()) {
+      const arr = list.map((p) => ({
+        start: p.start,
+        end: p.end,
+        tier: p.tier,
+        period_index: p.index,
+        total_spending: p.totalSpendingPrev, // spending periode sebelumnya
+      }));
+      arr.sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : 0));
+      periodsForPoints.set(userId, arr);
+    }
+
     for (const tx of allTx) {
       if (!tx.user_id || !tx.date) continue;
 
-      // Guard: kalau sudah punya poin (points_earned > 0) → jangan diapa-apakan lagi
+      // Kalau sudah ada poin, skip
       if (tx.points_earned && tx.points_earned > 0) continue;
 
-      const arr = periodsByUser.get(tx.user_id);
+      const arr = periodsForPoints.get(tx.user_id);
       if (!arr || arr.length === 0) continue;
 
-      const dateStr = tx.date;
-
-      // cari periode yang meng-cover tanggal transaksi (start <= date < end)
       const period = arr.find(
-        (p) => dateStr >= p.period_start && dateStr < p.period_end
+        (p) => tx.date >= p.start && tx.date < p.end
       );
       if (!period) continue;
 
-      // Guard: quarter pertama (tidak ada spending quarter sebelumnya) → total_spending = 0 → tidak ada poin
-      if (!period.total_spending || period.total_spending <= 0) {
-        continue;
-      }
+      // Skip periode pertama (Q1) → poin baru mulai bulan ke-4
+      if (period.period_index <= 1) continue;
 
-      const tier: MembershipTier = period.tier || "SILVER";
+      // Kalau spending periode sebelumnya 0 → nggak ada poin
+      if (!period.total_spending || period.total_spending <= 0) continue;
+
+      const tier = period.tier || "SILVER";
       const multiplier = multipliers[tier] ?? 1;
-
       if (baseAmount <= 0 || multiplier <= 0) continue;
 
       const basePoints = Math.floor(tx.publish_rate / baseAmount);
       const points = Math.floor(basePoints * multiplier);
       if (points <= 0) continue;
 
-      // Update transaksi (idempotent karena kita hanya proses yg points_earned masih 0/null)
-      const { error: updErr } = await supabase
+      // Update transaksi
+      const { error: updTxErr } = await supabase
         .from("transactions")
         .update({ points_earned: points })
         .eq("id", tx.id);
 
-      if (updErr) {
+      if (updTxErr) {
+        console.error("Error update transaksi poin:", updTxErr);
         return NextResponse.json(
-          { error: updErr.message },
+          { error: "Gagal update poin transaksi" },
           { status: 500 }
         );
       }
 
-      // Insert ledger untuk poin ini
+      // Insert ke reward_ledgers
       const { error: ledgerErr } = await supabase
         .from("reward_ledgers")
         .insert({
           user_id: tx.user_id,
-          type: "POINT_TX", // HARUS cocok dengan constraint reward_ledgers_type_check
+          type: "POINT_TX",
           points,
           amount: null,
           ref_id: tx.id,
-          note: "Points from transaction (quarterly engine)",
+          note: "Points from transaction (anchored 3-month period)",
         });
 
       if (ledgerErr) {
+        console.error("Error insert reward_ledgers:", ledgerErr);
         return NextResponse.json(
-          { error: ledgerErr.message },
+          { error: "Gagal insert reward ledger" },
           { status: 500 }
         );
       }
@@ -390,15 +467,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message:
-          "Quarterly engine executed (membership tiers + transaction points).",
+        message: "run-quarterly (anchored 3-month periods) selesai.",
         membershipPeriodsCreated,
+        membershipPeriodsUpdated,
         transactionsPointed,
       },
       { status: 200 }
     );
   } catch (err: any) {
-    console.error("run-quarterly error", err);
+    console.error("run-quarterly error:", err);
     return NextResponse.json(
       { error: err?.message || "Internal server error" },
       { status: 500 }

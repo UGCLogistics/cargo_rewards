@@ -150,14 +150,15 @@ export async function GET(request: Request) {
           nextThreshold !== null ? Math.max(0, nextThreshold - agg.total) : 0;
 
         // Status aktivitas berdasarkan jeda hari dari transaksi terakhir
-        let activity_status: "ACTIVE" | "RISK" | "DORMANT" = "DORMANT";
+        let activity_status: "ACTIVE" | "PASSIVE" | "RISK" | "DORMANT" = "DORMANT";
         if (agg.lastDate) {
           const last = new Date(agg.lastDate);
           const diffMs = endDateObj.getTime() - last.getTime();
           const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-          if (diffDays <= 30) activity_status = "ACTIVE";
-          else if (diffDays <= 60) activity_status = "RISK";
+          if (diffDays < 15) activity_status = "ACTIVE";
+          else if (diffDays <= 30) activity_status = "PASSIVE";
+          else if (diffDays <= 45) activity_status = "RISK";
           else activity_status = "DORMANT";
         }
 

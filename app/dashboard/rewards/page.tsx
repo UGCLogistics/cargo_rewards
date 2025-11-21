@@ -35,7 +35,7 @@ interface CustomerOption {
   company_name: string | null;
 }
 
-const ROWS_PER_PAGE = 50;
+const ROWS_PER_PAGE = 20;
 
 export default function RewardsHistoryPage() {
   const { user } = useAuth();
@@ -426,10 +426,10 @@ export default function RewardsHistoryPage() {
             </p>
           ) : (
             <>
-              <div className="overflow-x-auto rounded-xl border border-gray-800 bg-slate-950/60">
+              <div className="overflow-x-auto rounded-xl border border-[#ff4600]/80 bg-slate-950/60">
                 <table className="min-w-full text-left text-sm">
                   {/* HEADER GLASS EFFECT FF4600 */}
-                  <thead className="bg-[#ff4600]/25 backdrop-blur-md text-xs font-semibold uppercase tracking-wide text-white border-b border-[#ff4600]/60">
+                  <thead className="bg-[#ff4600]/25 backdrop-blur-md text-xs font-semibold uppercase tracking-wide text-white border-b border-[#ff4600]/80">
                     <tr>
                       <th className="px-4 py-3">Tgl transaksi</th>
                       <th className="px-4 py-3">Tgl rewards</th>

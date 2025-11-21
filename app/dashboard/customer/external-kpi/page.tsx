@@ -25,6 +25,8 @@ ChartJS.register(
   Legend
 );
 
+const POINT_VALUE_IDR = 250;
+
 interface DetailRow {
   date: string;
   count: number;
@@ -38,9 +40,13 @@ interface KpiTotals {
   total_transactions: number;
   total_publish_rate: number;
   total_discount: number;
-  total_cashback: number;
-  total_points: number;
+  total_cashback: number; // hanya ACTIVE_CASHBACK_3M
+  total_points: number; // total poin pernah didapat
+  points_redeemed: number; // poin sudah dipakai (nilai absolut)
+  points_remaining: number; // sisa poin
 }
+
+const ROWS_PER_PAGE = 20;
 
 export default function CustomerExternalKpiPage() {
   const [startDate, setStartDate] = useState("");
@@ -50,6 +56,7 @@ export default function CustomerExternalKpiPage() {
   const [chartData, setChartData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const applyFilters = async () => {
     setLoading(true);
@@ -60,7 +67,7 @@ export default function CustomerExternalKpiPage() {
       if (startDate) params.set("start", startDate);
       if (endDate) params.set("end", endDate);
 
-      // Detail per tanggal (RLS memastikan hanya data milik customer)
+      // Detail per tanggal
       const detailRes = await fetch(
         `/api/customer/kpi/detail?${params.toString()}`
       );
@@ -70,6 +77,7 @@ export default function CustomerExternalKpiPage() {
       }
       const detail: DetailRow[] = detailJson.data || [];
       setDetailData(detail);
+      setCurrentPage(1);
 
       // Total KPI
       const kpiRes = await fetch(`/api/customer/kpi?${params.toString()}`);
@@ -79,14 +87,11 @@ export default function CustomerExternalKpiPage() {
       }
       setKpiTotals(kpiJson.data || null);
 
-      // Aggregasi ke grafik
+      // Aggregasi ke grafik -> Publish Rate (bar) + Points (line)
       const aggByDate: Record<
         string,
         {
-          total_transactions: number;
           total_publish_rate: number;
-          total_discount: number;
-          total_cashback: number;
           total_points: number;
         }
       > = {};
@@ -95,72 +100,38 @@ export default function CustomerExternalKpiPage() {
         const date = row.date;
         if (!aggByDate[date]) {
           aggByDate[date] = {
-            total_transactions: 0,
             total_publish_rate: 0,
-            total_discount: 0,
-            total_cashback: 0,
             total_points: 0,
           };
         }
-        aggByDate[date].total_transactions += Number(row.count) || 0;
         aggByDate[date].total_publish_rate +=
           Number(row.total_publish_rate) || 0;
-        aggByDate[date].total_discount += Number(row.total_discount) || 0;
-        aggByDate[date].total_cashback += Number(row.total_cashback) || 0;
         aggByDate[date].total_points += Number(row.total_points) || 0;
       });
 
       const dates = Object.keys(aggByDate).sort();
       const publishData = dates.map((d) => aggByDate[d].total_publish_rate);
-      const discountData = dates.map((d) => aggByDate[d].total_discount);
-      const cashbackData = dates.map((d) => aggByDate[d].total_cashback);
       const pointsData = dates.map((d) => aggByDate[d].total_points);
-      const transactionsData = dates.map(
-        (d) => aggByDate[d].total_transactions
-      );
 
       setChartData({
         labels: dates,
         datasets: [
           {
-            label: "Publish Rate",
+            type: "bar" as const,
+            label: "Publish Rate (Rp juta)",
             data: publishData,
+            yAxisID: "y",
             borderColor: "rgba(255,70,0,0.9)",
-            backgroundColor: "rgba(255,70,0,0.3)",
-            tension: 0.3,
-            yAxisID: "y",
+            backgroundColor: "rgba(255,70,0,0.5)",
           },
           {
-            label: "Diskon Diterima",
-            data: discountData,
-            borderColor: "rgba(16,185,129,0.9)",
-            backgroundColor: "rgba(16,185,129,0.3)",
-            tension: 0.3,
-            yAxisID: "y",
-          },
-          {
-            label: "Cashback Diterima",
-            data: cashbackData,
-            borderColor: "rgba(251,191,36,0.9)",
-            backgroundColor: "rgba(251,191,36,0.3)",
-            tension: 0.3,
-            yAxisID: "y",
-          },
-          {
-            label: "Poin",
+            type: "line" as const,
+            label: "Poin (ribuan)",
             data: pointsData,
+            yAxisID: "y1",
             borderColor: "rgba(59,130,246,0.9)",
             backgroundColor: "rgba(59,130,246,0.3)",
             tension: 0.3,
-            yAxisID: "y1",
-          },
-          {
-            label: "Jumlah Pengiriman",
-            data: transactionsData,
-            borderColor: "rgba(168,85,247,0.9)",
-            backgroundColor: "rgba(168,85,247,0.3)",
-            tension: 0.3,
-            yAxisID: "y2",
           },
         ],
       });
@@ -169,6 +140,7 @@ export default function CustomerExternalKpiPage() {
       setChartData(null);
       setKpiTotals(null);
       setDetailData([]);
+      setCurrentPage(1);
     } finally {
       setLoading(false);
     }
@@ -179,16 +151,73 @@ export default function CustomerExternalKpiPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // === TABLE: sort terbaru dulu & paginasi 20 baris ===
+  const sortedDetail = [...detailData].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
+  const totalPages =
+    sortedDetail.length === 0
+      ? 1
+      : Math.ceil(sortedDetail.length / ROWS_PER_PAGE);
+  const pageSafe = Math.min(currentPage, totalPages);
+  const paginatedDetail = sortedDetail.slice(
+    (pageSafe - 1) * ROWS_PER_PAGE,
+    pageSafe * ROWS_PER_PAGE
+  );
+
+  const handleExportCsv = () => {
+    if (!detailData.length) return;
+
+    const header = [
+      "Tanggal",
+      "Pengiriman",
+      "Publish Rate",
+      "Diskon",
+      "Cashback",
+      "Poin",
+    ];
+    const rows = sortedDetail.map((row) => [
+      row.date,
+      row.count,
+      row.total_publish_rate,
+      row.total_discount,
+      row.total_cashback,
+      row.total_points,
+    ]);
+    const csv = [header, ...rows]
+      .map((cols) =>
+        cols.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "riwayat_kpi_eksternal.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const totalPoints = kpiTotals?.total_points ?? 0;
+  const pointsRedeemed = kpiTotals?.points_redeemed ?? 0;
+  const pointsRemaining = kpiTotals?.points_remaining ?? 0;
+  const redeemedValueIdr = pointsRedeemed * POINT_VALUE_IDR;
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* HEADER + FILTER */}
       <header className="space-y-3">
         <div>
           <h1 className="text-lg md:text-xl font-semibold">
-            Dashboard KPI Eksternal
+            Dashboard Customer
           </h1>
           <p className="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl">
-            Pantau performa diskon, cashback, publish rate, dan poin
+            Pantau perolehan diskon, cashback, publish rate, dan poin
             berdasarkan periode yang Anda pilih.
           </p>
         </div>
@@ -255,7 +284,6 @@ export default function CustomerExternalKpiPage() {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: "index", intersect: false },
-                stacked: false,
                 plugins: {
                   legend: {
                     labels: { color: "#e5e7eb", font: { size: 10 } },
@@ -278,8 +306,10 @@ export default function CustomerExternalKpiPage() {
                     position: "left",
                     ticks: {
                       color: "#9ca3af",
-                      callback: (value) =>
-                        `Rp ${Number(value).toLocaleString("id-ID")}`,
+                      callback: (value: any) => {
+                        const v = Number(value) / 1_000_000;
+                        return `Rp ${v.toLocaleString("id-ID")} jt`;
+                      },
                     },
                     grid: { color: "rgba(148,163,184,0.15)" },
                   },
@@ -290,14 +320,11 @@ export default function CustomerExternalKpiPage() {
                     grid: { drawOnChartArea: false },
                     ticks: {
                       color: "#9ca3af",
-                      callback: (value) =>
-                        `${Number(value).toLocaleString("id-ID")}`,
+                      callback: (value: any) => {
+                        const v = Number(value) / 1000;
+                        return `${v.toLocaleString("id-ID")} rb`;
+                      },
                     },
-                  },
-                  y2: {
-                    type: "linear",
-                    display: false,
-                    position: "right",
                   },
                 },
               }}
@@ -318,17 +345,13 @@ export default function CustomerExternalKpiPage() {
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">
-                Total Pengiriman
-              </span>
+              <span className="text-xs text-slate-400">Total Pengiriman</span>
               <span className="text-base md:text-lg font-semibold">
                 {kpiTotals.total_transactions.toLocaleString("id-ID")}
               </span>
             </div>
             <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">
-                Total Publish Rate
-              </span>
+              <span className="text-xs text-slate-400">Total Transaksi</span>
               <span className="text-base md:text-lg font-semibold">
                 Rp{" "}
                 {kpiTotals.total_publish_rate.toLocaleString("id-ID", {
@@ -337,9 +360,7 @@ export default function CustomerExternalKpiPage() {
               </span>
             </div>
             <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">
-                Total Diskon
-              </span>
+              <span className="text-xs text-slate-400">Total Diskon</span>
               <span className="text-base md:text-lg font-semibold">
                 Rp{" "}
                 {kpiTotals.total_discount.toLocaleString("id-ID", {
@@ -349,7 +370,7 @@ export default function CustomerExternalKpiPage() {
             </div>
             <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
               <span className="text-xs text-slate-400">
-                Total Cashback
+                Total Cashback (3 Bulan Pertama)
               </span>
               <span className="text-base md:text-lg font-semibold">
                 Rp{" "}
@@ -359,53 +380,81 @@ export default function CustomerExternalKpiPage() {
               </span>
             </div>
             <div className="glass rounded-2xl px-3 py-3 md:px-4 md:py-4 flex flex-col gap-1">
-              <span className="text-xs text-slate-400">
-                Total Poin
-              </span>
-              <span className="text-base md:text-lg font-semibold">
-                {kpiTotals.total_points.toLocaleString("id-ID")}
-              </span>
+              <span className="text-xs text-slate-400">Poin Rewards</span>
+              <div className="space-y-1 text-[11px] md:text-xs">
+                <div>
+                  <span className="text-slate-400">Total poin diperoleh</span>
+                  <p className="text-base md:text-lg font-semibold">
+                    {totalPoints.toLocaleString("id-ID")}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p>
+                    Sudah diredeem:{" "}
+                    <span className="font-semibold">
+                      {pointsRedeemed.toLocaleString("id-ID")} poin
+                    </span>{" "}
+                    (≈ Rp{" "}
+                    {redeemedValueIdr.toLocaleString("id-ID", {
+                      maximumFractionDigits: 0,
+                    })}
+                    )
+                  </p>
+                  <p>
+                    Sisa poin:{" "}
+                    <span className="font-semibold text-[var(--accent)]">
+                      {pointsRemaining.toLocaleString("id-ID")} poin
+                    </span>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* DETAIL HARIAN */}
+      {/* DETAIL / RIWAYAT TRANSAKSI & REWARD */}
       {detailData.length > 0 && (
         <section className="space-y-2">
-          <h2 className="text-sm md:text-base font-semibold">
-            Detail Harian
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm md:text-base font-semibold">
+              Riwayat Transaksi & Perolehan Rewards
+            </h2>
+            <button
+              onClick={handleExportCsv}
+              className="text-[11px] md:text-xs px-3 py-1.5 rounded-lg border border-slate-600 text-slate-200 hover:bg-slate-700/60 transition"
+            >
+              Export CSV
+            </button>
+          </div>
           <div className="glass rounded-2xl overflow-x-auto">
             <table className="min-w-full text-[11px] md:text-xs">
               <thead>
                 <tr className="border-b border-white/10 text-slate-300">
-                  <th className="px-3 py-2 text-left font-medium">
-                    Tanggal
-                  </th>
+                  <th className="px-3 py-2 text-left font-medium">No.</th>
+                  <th className="px-3 py-2 text-left font-medium">Tanggal</th>
                   <th className="px-3 py-2 text-right font-medium">
                     Pengiriman
                   </th>
                   <th className="px-3 py-2 text-right font-medium">
                     Publish Rate
                   </th>
-                  <th className="px-3 py-2 text-right font-medium">
-                    Diskon
-                  </th>
+                  <th className="px-3 py-2 text-right font-medium">Diskon</th>
                   <th className="px-3 py-2 text-right font-medium">
                     Cashback
                   </th>
-                  <th className="px-3 py-2 text-right font-medium">
-                    Poin
-                  </th>
+                  <th className="px-3 py-2 text-right font-medium">Poin</th>
                 </tr>
               </thead>
               <tbody>
-                {detailData.map((row) => (
+                {paginatedDetail.map((row, idx) => (
                   <tr
-                    key={row.date}
+                    key={row.date + idx}
                     className="border-t border-white/5 hover:bg-white/5"
                   >
+                    <td className="px-3 py-2">
+                      {(pageSafe - 1) * ROWS_PER_PAGE + idx + 1}
+                    </td>
                     <td className="px-3 py-2">{row.date}</td>
                     <td className="px-3 py-2 text-right">
                       {row.count.toLocaleString("id-ID")}
@@ -435,6 +484,34 @@ export default function CustomerExternalKpiPage() {
                 ))}
               </tbody>
             </table>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-3 py-2 border-t border-white/10 text-[11px] md:text-xs">
+                <span className="text-slate-400">
+                  Halaman {pageSafe} dari {totalPages}
+                </span>
+                <div className="space-x-2">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.max(1, p - 1))
+                    }
+                    disabled={pageSafe === 1}
+                    className="px-2 py-1 rounded-md border border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Sebelumnya
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={pageSafe === totalPages}
+                    className="px-2 py-1 rounded-md border border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Berikutnya
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import supabase from "../../lib/supabaseClient";
 import type { LucideIcon } from "lucide-react";
@@ -25,6 +25,11 @@ import {
   CheckCircle,
   GitGraphIcon,
   ListFilterPlusIcon,
+  LineChartIcon,
+  HomeIcon,
+  FileLineChartIcon,
+  IdCardIcon,
+  LogOutIcon,
 } from "lucide-react";
 
 type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER";
@@ -42,6 +47,7 @@ export default function DashboardLayout({
 }) {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   const rawRole = (user?.user_metadata as any)?.role as string | undefined;
   const role: Role = (rawRole ? rawRole.toUpperCase() : "CUSTOMER") as Role;
@@ -94,9 +100,14 @@ export default function DashboardLayout({
     // INTERNAL - ADMIN: semua akses, TAPI TIDAK ADA REDEEM CUSTOMER DI MENU
     navItems = [
       {
+        href: "/dashboard",
+        label: "Home",
+        icon: HomeIcon,
+      },
+      {
         href: "/dashboard/admin/internal-kpi",
-        label: "Dashboard Internal",
-        icon: Home,
+        label: "Dashboard",
+        icon: LineChartIcon,
       },
       {
         href: "/dashboard/transactions",
@@ -154,9 +165,14 @@ export default function DashboardLayout({
     // INTERNAL - MANAGER: TIDAK ADA REDEEM CUSTOMER DI MENU
     navItems = [
       {
+        href: "/dashboard",
+        label: "Home",
+        icon: HomeIcon,
+      },
+      {
         href: "/dashboard/manager/internal-kpi",
-        label: "Dashboard Internal",
-        icon: Home,
+        label: "Dashboard",
+        icon: LineChartIcon,
       },
       {
         href: "/dashboard/transactions",
@@ -189,9 +205,14 @@ export default function DashboardLayout({
     // INTERNAL - STAFF: fokus ke dashboard & transaksi saja, TANPA menu redeem
     navItems = [
       {
+        href: "/dashboard",
+        label: "Home",
+        icon: HomeIcon,
+      },
+      {
         href: "/dashboard/staff/internal-kpi",
-        label: "Dashboard Internal",
-        icon: Home,
+        label: "Dashboard",
+        icon: LineChartIcon,
       },
       {
         href: "/dashboard/transactions",
@@ -205,13 +226,13 @@ export default function DashboardLayout({
     navItems = [
       {
         href: "/dashboard",
-        label: "Dashboard Customer",
-        icon: Home,
+        label: "Digital Card",
+        icon: IdCardIcon,
       },
-     {
+      {
         href: "/dashboard/customer/external-kpi",
-        label: "Detail Performance",
-        icon: ListFilterPlusIcon,
+        label: "Dashboard",
+        icon: LineChartIcon,
       },
       {
         href: "/dashboard/transactions",
@@ -231,6 +252,18 @@ export default function DashboardLayout({
       ...accountItems,
     ];
   }
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    } finally {
+      // Setelah logout, paksa ke landing page
+      router.replace("/");
+      router.refresh();
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[var(--background)] text-[var(--text)]">
@@ -328,12 +361,12 @@ export default function DashboardLayout({
             </p>
           )}
           <button
-            onClick={async () => {
-              await signOut();
-            }}
-            className="w-full rounded-lg bg-[#ff4600] text-white py-2 text-[11px] md:text-xs font-semibold hover:bg-[#ff5f24] transition"
+            type="button"
+            onClick={handleLogout}
+            className="w-full rounded-lg bg-[#ff4600] text-white py-2 flex items-center justify-center hover:bg-[#ff5f24] transition"
+            aria-label="Logout"
           >
-            Keluar
+            <LogOutIcon className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
       </aside>

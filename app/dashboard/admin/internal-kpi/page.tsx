@@ -2,6 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "context/AuthContext";
+import {
+  Package,
+  CreditCard,
+  Wallet,
+  Users,
+  BadgePercent,
+  Gift,
+  Receipt,
+  Percent,
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  ArrowDownCircle,
+  PiggyBank,
+  Award,
+  Trophy,
+  Crown,
+  Activity,
+  Clock,
+  AlertTriangle,
+  Moon,
+  CircleEqualIcon,
+} from "lucide-react";
 
 const POINT_VALUE = 250; // 1 poin = 250 rupiah
 
@@ -31,17 +54,31 @@ type KpiData = {
   total_transactions: number;
   total_publish_rate: number;
   total_discount: number;
+
+  // Cashback: hanya ACTIVE_CASHBACK_3M (sama dengan KPI eksternal)
   total_cashback: number;
-  total_points: number;
+
+  // Poin (sinkron dengan eksternal & membership card)
+  total_points?: number;
+  total_points_earned?: number;
+  total_points_redeemed?: number;
+  total_points_available?: number;
+
   total_customers: number;
   membership_counts: MembershipCounts;
   top_customers: TopCustomerRow[];
   top_sales: TopSalesRow[];
 
-  // basis transaksi yang menerima masing-masing reward
+  // basis transaksi
   discount_base_amount?: number;
   cashback_base_amount?: number;
   points_base_amount?: number;
+
+  // keaktifan customer
+  active_customers?: number;
+  passive_customers?: number;
+  high_risk_dormant_customers?: number;
+  dormant_customers?: number;
 };
 
 type CustomerOption = {
@@ -109,7 +146,6 @@ export default function AdminInternalKpiPage() {
 
       setKpi((json?.data as KpiData) || null);
 
-      // set dropdown options (diambil dari meta, tidak terpengaruh filter)
       if (json?.meta?.customers) {
         setCustomerOptions(json.meta.customers as CustomerOption[]);
       }
@@ -148,7 +184,6 @@ export default function AdminInternalKpiPage() {
   const totalRevenue = kpi?.total_publish_rate ?? 0;
   const totalDiscount = kpi?.total_discount ?? 0;
   const totalCashback = kpi?.total_cashback ?? 0;
-  const totalPoints = kpi?.total_points ?? 0;
   const totalCustomers = kpi?.total_customers ?? 0;
   const membershipCounts: MembershipCounts = kpi?.membership_counts ?? {
     SILVER: 0,
@@ -156,13 +191,31 @@ export default function AdminInternalKpiPage() {
     PLATINUM: 0,
   };
 
+  // Points breakdown
+  const totalPointsEarned =
+    kpi?.total_points_earned ?? kpi?.total_points ?? 0;
+
+  const totalPointsRedeemed = kpi?.total_points_redeemed ?? 0;
+
+  const totalPointsAvailable =
+    kpi?.total_points_available ??
+    Math.max(totalPointsEarned - totalPointsRedeemed, 0);
+
+  const totalPointsEarnedValue = totalPointsEarned * POINT_VALUE;
+  const totalPointsRedeemedValue = totalPointsRedeemed * POINT_VALUE;
+  const totalPointsAvailableValue = totalPointsAvailable * POINT_VALUE;
+
+  // Untuk biaya rewards, gunakan poin yang DIBERIKAN
+  const totalPointsForCost = totalPointsEarned;
+
   // basis transaksi
   const discountBaseAmount = kpi?.discount_base_amount ?? 0;
   const cashbackBaseAmount = kpi?.cashback_base_amount ?? 0;
   const pointsBaseAmount = kpi?.points_base_amount ?? 0;
 
-  const totalPointsValue = totalPoints * POINT_VALUE;
-  const totalRewards = totalDiscount + totalCashback + totalPointsValue;
+  const totalRewards =
+    totalDiscount + totalCashback + totalPointsForCost * POINT_VALUE;
+
   const netRevenue = Math.max(totalRevenue - totalRewards, 0);
   const rewardRatio =
     totalRevenue > 0 ? (totalRewards / totalRevenue) * 100 : 0;
@@ -172,7 +225,14 @@ export default function AdminInternalKpiPage() {
   const avgRewardsPerTxn =
     totalTransactions > 0 ? totalRewards / totalTransactions : 0;
   const avgPointsPerTxn =
-    totalTransactions > 0 ? totalPoints / totalTransactions : 0;
+    totalTransactions > 0 ? totalPointsForCost / totalTransactions : 0;
+
+  // keaktifan customer
+  const activeCustomers = kpi?.active_customers ?? 0;
+  const passiveCustomers = kpi?.passive_customers ?? 0;
+  const highRiskDormantCustomers =
+    kpi?.high_risk_dormant_customers ?? 0;
+  const dormantCustomers = kpi?.dormant_customers ?? 0;
 
   const topCustomers = kpi?.top_customers ?? [];
   const topSales = kpi?.top_sales ?? [];
@@ -313,34 +373,30 @@ export default function AdminInternalKpiPage() {
         </form>
       </section>
 
-      {/* KPI Cards utama */}
+      {/* KPI Summary – 4 kolom x 2 baris (8 kartu) */}
       {!loading && kpi && (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-          {/* Total transaksi */}
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {/* 1. Total transaksi */}
           <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Total Transaksi
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Transaksi
+              </span>
+              <Package className="w-8 h-8 text-slate-400" />
+            </div>
             <span className="text-xl font-semibold text-white">
               {totalTransactions.toLocaleString("id-ID")}
             </span>
           </div>
 
-          {/* Total customer */}
+          {/* 2. Total Publish Rate */}
           <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Total Customer Aktif
-            </span>
-            <span className="text-xl font-semibold text-white">
-              {totalCustomers.toLocaleString("id-ID")}
-            </span>
-          </div>
-
-          {/* Revenue */}
-          <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Total Publish Rate
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Publish Rate
+              </span>
+              <CreditCard className="w-8 h-8 text-slate-400" />
+            </div>
             <span className="text-xl font-semibold text-white">
               Rp{" "}
               {totalRevenue.toLocaleString("id-ID", {
@@ -349,73 +405,103 @@ export default function AdminInternalKpiPage() {
             </span>
           </div>
 
-          {/* Diskon */}
+          {/* 3. Total Cashback */}
           <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Total Diskon
-            </span>
-            <span className="text-xl font-semibold text-emerald-300">
-              Rp{" "}
-              {totalDiscount.toLocaleString("id-ID", {
-                maximumFractionDigits: 0,
-              })}
-            </span>
-            {discountBaseAmount > 0 && (
-              <span className="text-[11px] text-slate-400">
-                Dari transaksi senilai{" "}
-                {discountBaseAmount.toLocaleString("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                })}
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Cashback
               </span>
-            )}
-          </div>
-
-          {/* Cashback */}
-          <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Total Cashback
-            </span>
+              <Wallet className="w-8 h-8 text-amber-300" />
+            </div>
             <span className="text-xl font-semibold text-amber-300">
               Rp{" "}
               {totalCashback.toLocaleString("id-ID", {
                 maximumFractionDigits: 0,
               })}
             </span>
-            {cashbackBaseAmount > 0 && (
-              <span className="text-[11px] text-slate-400">
-                Dari transaksi senilai{" "}
-                {cashbackBaseAmount.toLocaleString("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            )}
           </div>
 
-          {/* Poin */}
+          {/* 4. Total Poin Diredeem */}
           <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-slate-400">
-              Total Poin Diberikan
-            </span>
-            <span className="text-xl font-semibold text-sky-300">
-              {totalPoints.toLocaleString("id-ID")}
-            </span>
-            {pointsBaseAmount > 0 && (
-              <span className="text-[11px] text-slate-400">
-                Dari transaksi senilai{" "}
-                {pointsBaseAmount.toLocaleString("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  maximumFractionDigits: 0,
-                })}
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Poin Diredeem
               </span>
-            )}
-            <span className="text-[11px] text-slate-400">
-              Nilai setara: Rp{" "}
-              {totalPointsValue.toLocaleString("id-ID", {
+              <ArrowDownCircle className="w-8 h-8 text-sky-200" />
+            </div>
+            <span className="text-xl font-semibold text-sky-200">
+              {totalPointsRedeemed.toLocaleString("id-ID")} poin
+            </span>
+            <span className="text-[11px] text-slate-500">
+              ≈ Rp{" "}
+              {totalPointsRedeemedValue.toLocaleString("id-ID", {
+                maximumFractionDigits: 0,
+              })}
+            </span>
+          </div>
+
+          {/* 5. Total customer aktif */}
+          <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Customer Aktif
+              </span>
+              <Users className="w-8 h-8 text-slate-400" />
+            </div>
+            <span className="text-xl font-semibold text-white">
+              {totalCustomers.toLocaleString("id-ID")}
+            </span>
+          </div>
+
+          {/* 6. Total Diskon */}
+          <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Diskon
+              </span>
+              <BadgePercent className="w-8 h-8 text-emerald-300" />
+            </div>
+            <span className="text-xl font-semibold text-emerald-300">
+              Rp{" "}
+              {totalDiscount.toLocaleString("id-ID", {
+                maximumFractionDigits: 0,
+              })}
+            </span>
+          </div>
+
+          {/* 7. Total Poin Diberikan */}
+          <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Total Poin Diberikan
+              </span>
+              <Gift className="w-8 h-8 text-sky-300" />
+            </div>
+            <span className="text-xl font-semibold text-sky-300">
+              {totalPointsEarned.toLocaleString("id-ID")} poin
+            </span>
+            <span className="text-[11px] text-slate-500">
+              ≈ Rp{" "}
+              {totalPointsEarnedValue.toLocaleString("id-ID", {
+                maximumFractionDigits: 0,
+              })}
+            </span>
+          </div>
+
+          {/* 8. Sisa Poin Tersedia */}
+          <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                Sisa Poin Tersedia
+              </span>
+              <CircleEqualIcon className="w-8 h-8 text-sky-300" />
+            </div>
+            <span className="text-xl font-semibold text-sky-300">
+              {totalPointsAvailable.toLocaleString("id-ID")} poin
+            </span>
+            <span className="text-[11px] text-slate-500">
+              ≈ Rp{" "}
+              {totalPointsAvailableValue.toLocaleString("id-ID", {
                 maximumFractionDigits: 0,
               })}
             </span>
@@ -435,13 +521,16 @@ export default function AdminInternalKpiPage() {
             </span>
           </div>
 
-          {/* Grid analitik turunan */}
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {/* Grid analitik turunan – 3 kolom x 3 baris */}
+          <div className="grid gap-3 md:grid-cols-3">
             {/* Net revenue */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                Net Revenue (setelah rewards)
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Net Revenue (setelah rewards)
+                </span>
+                <Wallet className="w-7 h-7 text-slate-400" />
+              </div>
               <span className="text-lg font-semibold text-white">
                 Rp{" "}
                 {netRevenue.toLocaleString("id-ID", {
@@ -455,10 +544,13 @@ export default function AdminInternalKpiPage() {
 
             {/* Total rewards dalam Rp */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                Total Rewards (Diskon + Cashback + Poin)
-              </span>
-            <span className="text-lg font-semibold text-emerald-300">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Total Rewards (Diskon + Cashback + Poin)
+                </span>
+                <Receipt className="w-7 h-7 text-emerald-300" />
+              </div>
+              <span className="text-lg font-semibold text-emerald-300">
                 Rp{" "}
                 {totalRewards.toLocaleString("id-ID", {
                   maximumFractionDigits: 0,
@@ -471,9 +563,12 @@ export default function AdminInternalKpiPage() {
 
             {/* Rasio rewards vs revenue */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                Rasio Rewards terhadap Revenue
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Rasio Rewards terhadap Revenue
+                </span>
+                <Percent className="w-7 h-7 text-amber-300" />
+              </div>
               <span className="text-lg font-semibold text-amber-300">
                 {rewardRatio.toFixed(2)}%
               </span>
@@ -482,11 +577,14 @@ export default function AdminInternalKpiPage() {
               </span>
             </div>
 
-            {/* Rata-rata per transaksi */}
+            {/* Avg revenue per transaksi */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                Avg Revenue per Transaksi
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Avg Revenue per Transaksi
+                </span>
+                <BarChart3 className="w-7 h-7 text-slate-400" />
+              </div>
               <span className="text-lg font-semibold text-white">
                 Rp{" "}
                 {avgRevenuePerTxn.toLocaleString("id-ID", {
@@ -498,10 +596,14 @@ export default function AdminInternalKpiPage() {
               </span>
             </div>
 
+            {/* Avg rewards per transaksi */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                Avg Rewards per Transaksi
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Avg Rewards per Transaksi
+                </span>
+                <PieChart className="w-7 h-7 text-emerald-300" />
+              </div>
               <span className="text-lg font-semibold text-emerald-300">
                 Rp{" "}
                 {avgRewardsPerTxn.toLocaleString("id-ID", {
@@ -514,10 +616,14 @@ export default function AdminInternalKpiPage() {
               </span>
             </div>
 
+            {/* Avg poin per transaksi */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                Avg Poin per Transaksi
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Avg Poin per Transaksi
+                </span>
+                <TrendingUp className="w-7 h-7 text-sky-300" />
+              </div>
               <span className="text-lg font-semibold text-sky-300">
                 {avgPointsPerTxn.toLocaleString("id-ID", {
                   maximumFractionDigits: 0,
@@ -525,6 +631,63 @@ export default function AdminInternalKpiPage() {
               </span>
               <span className="text-[11px] text-slate-400">
                 Menggambarkan intensitas pemberian poin di setiap transaksi.
+              </span>
+            </div>
+
+            {/* Nilai Poin Diberikan */}
+            <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Nilai Poin Diberikan
+                </span>
+                <Gift className="w-7 h-7 text-sky-300" />
+              </div>
+              <span className="text-lg font-semibold text-sky-300">
+                Rp{" "}
+                {totalPointsEarnedValue.toLocaleString("id-ID", {
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Konversi dari total poin yang diberikan ke rupiah.
+              </span>
+            </div>
+
+            {/* Nilai Poin Diredeem */}
+            <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Nilai Poin Diredeem
+                </span>
+                <ArrowDownCircle className="w-7 h-7 text-sky-200" />
+              </div>
+              <span className="text-lg font-semibold text-sky-200">
+                Rp{" "}
+                {totalPointsRedeemedValue.toLocaleString("id-ID", {
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Total nilai poin yang sudah dikonversi menjadi benefit.
+              </span>
+            </div>
+
+            {/* Nilai Sisa Poin */}
+            <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  Nilai Sisa Poin Tersedia
+                </span>
+                <CircleEqualIcon className="w-7 h-7 text-sky-300" />
+              </div>
+              <span className="text-lg font-semibold text-sky-300">
+                Rp{" "}
+                {totalPointsAvailableValue.toLocaleString("id-ID", {
+                  maximumFractionDigits: 0,
+                })}
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Potensi benefit yang masih bisa dinikmati customer.
               </span>
             </div>
           </div>
@@ -536,27 +699,89 @@ export default function AdminInternalKpiPage() {
             </h3>
             <div className="grid gap-3 sm:grid-cols-3 text-xs">
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                  Silver
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                    Silver
+                  </span>
+                  <Award className="w-7 h-7 text-slate-300" />
+                </div>
                 <span className="text-lg font-semibold text-slate-100">
                   {membershipCounts.SILVER.toLocaleString("id-ID")}
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <span className="text-[11px] uppercase tracking-wide text-yellow-500">
-                  Gold
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-yellow-500">
+                    Gold
+                  </span>
+                  <Trophy className="w-7 h-7 text-yellow-300" />
+                </div>
                 <span className="text-lg font-semibold text-yellow-300">
                   {membershipCounts.GOLD.toLocaleString("id-ID")}
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <span className="text-[11px] uppercase tracking-wide text-slate-200">
-                  Platinum
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-slate-200">
+                    Platinum
+                  </span>
+                  <Crown className="w-7 h-7 text-slate-50" />
+                </div>
                 <span className="text-lg font-semibold text-slate-50">
                   {membershipCounts.PLATINUM.toLocaleString("id-ID")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Keaktifan customer */}
+          <div className="mt-3">
+            <h3 className="text-xs font-semibold text-white mb-2">
+              Status Keaktifan Customer (berdasarkan transaksi terakhir)
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-4 text-xs">
+              <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-emerald-300">
+                    Active (&lt; 15 hari)
+                  </span>
+                  <Activity className="w-6 h-6 text-emerald-300" />
+                </div>
+                <span className="text-lg font-semibold text-slate-50">
+                  {activeCustomers.toLocaleString("id-ID")}
+                </span>
+              </div>
+              <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-sky-300">
+                    Passive (15–30 hari)
+                  </span>
+                  <Clock className="w-6 h-6 text-sky-300" />
+                </div>
+                <span className="text-lg font-semibold text-slate-50">
+                  {passiveCustomers.toLocaleString("id-ID")}
+                </span>
+              </div>
+              <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-amber-300">
+                    High Risk Dormant (31–45)
+                  </span>
+                  <AlertTriangle className="w-6 h-6 text-amber-300" />
+                </div>
+                <span className="text-lg font-semibold text-slate-50">
+                  {highRiskDormantCustomers.toLocaleString("id-ID")}
+                </span>
+              </div>
+              <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wide text-red-300">
+                    Dormant (&gt; 45 hari)
+                  </span>
+                  <Moon className="w-6 h-6 text-red-300" />
+                </div>
+                <span className="text-lg font-semibold text-slate-50">
+                  {dormantCustomers.toLocaleString("id-ID")}
                 </span>
               </div>
             </div>
@@ -653,7 +878,7 @@ export default function AdminInternalKpiPage() {
                     {topSales.map((s) => (
                       <tr
                         key={s.sales_name}
-                        className="border-t border-white/10 hover:bg-white/5"
+                        className="border-t border-white/10 hover:bg.white/5"
                       >
                         <td className="px-3 py-2">
                           {s.sales_name || "Tanpa Sales"}

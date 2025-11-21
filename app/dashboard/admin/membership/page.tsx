@@ -17,7 +17,7 @@ import {
 } from "recharts";
 
 type Tier = "SILVER" | "GOLD" | "PLATINUM";
-type ActivityStatus = "ACTIVE" | "RISK" | "DORMANT";
+type ActivityStatus = "ACTIVE" | "PASSIVE" | "RISK" | "DORMANT";
 
 interface MembershipRow {
   user_id: string;
@@ -45,6 +45,7 @@ const TIER_COLORS: Record<Tier, string> = {
 
 const ACTIVITY_LABEL: Record<ActivityStatus, string> = {
   ACTIVE: "Aktif",
+  PASSIVE: "Pasif",
   RISK: "Risk",
   DORMANT: "Dormant",
 };
@@ -216,6 +217,7 @@ export default function AdminMembershipPage() {
   const activityAgg = useMemo(() => {
     const base: Record<ActivityStatus, number> = {
       ACTIVE: 0,
+      PASSIVE: 0,
       RISK: 0,
       DORMANT: 0,
     };
@@ -254,6 +256,7 @@ export default function AdminMembershipPage() {
   const activityData: { status: ActivityStatus; name: string; value: number }[] =
     [
       { status: "ACTIVE", name: ACTIVITY_LABEL.ACTIVE, value: activityAgg.ACTIVE },
+      { status: "PASSIVE", name: ACTIVITY_LABEL.PASSIVE, value: activityAgg.PASSIVE },
       { status: "RISK", name: ACTIVITY_LABEL.RISK, value: activityAgg.RISK },
       { status: "DORMANT", name: ACTIVITY_LABEL.DORMANT, value: activityAgg.DORMANT },
     ];
@@ -409,11 +412,15 @@ export default function AdminMembershipPage() {
             <span className="font-semibold">
               {activityAgg.ACTIVE.toLocaleString("id-ID")}
             </span>{" "}
-            • Risk:{" "}
+            | Pasif:{" "}
+            <span className="font-semibold">
+              {activityAgg.ACTIVE.toLocaleString("id-ID")}
+            </span>{" "}
+            | Risk:{" "}
             <span className="font-semibold">
               {activityAgg.RISK.toLocaleString("id-ID")}
             </span>{" "}
-            • Dormant:{" "}
+            | Dormant:{" "}
             <span className="font-semibold">
               {activityAgg.DORMANT.toLocaleString("id-ID")}
             </span>
