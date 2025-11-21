@@ -1,7 +1,13 @@
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // app/api/admin/import-transactions/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
+
+
   loadProgramConfigs,
   HelloDiscountConfig,
 } from "lib/rewardsConfig";

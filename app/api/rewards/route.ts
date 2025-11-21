@@ -1,6 +1,12 @@
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // app/api/rewards/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+
 
 /**
  * Supabase service client (pakai SERVICE_ROLE, bypass RLS).

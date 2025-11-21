@@ -1,6 +1,12 @@
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // app/api/customers-simple/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

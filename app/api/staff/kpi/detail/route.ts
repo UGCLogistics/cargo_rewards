@@ -1,7 +1,13 @@
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from 'next/server';
 import { cookies, headers } from 'next/headers';
-import { createRouteHandlerSupabaseClient as createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
+
+
+
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,7 +22,7 @@ function getServiceClient() {
  * caller to have MANAGER or ADMIN role.
  */
 export async function GET(request: Request) {
-  const supabase = createRouteHandlerClient({ headers, cookies });
+  const supabase = createSupabaseServerClient();
   const { data: { user }, error: userErr } = await supabase.auth.getUser();
   if (userErr || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -1,7 +1,7 @@
+import type { Session, User } from "@supabase/supabase-js";
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import type { Session, User } from '@supabase/auth-helpers-nextjs';
 import supabase from '../lib/supabaseClient';
 
 // Define the shape of our authentication context. It exposes the current

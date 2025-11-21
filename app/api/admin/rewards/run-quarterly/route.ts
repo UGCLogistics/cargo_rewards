@@ -7,6 +7,10 @@ import {
   MembershipTier,
 } from "lib/rewardsConfig";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+
 function isAdminRole(role: unknown) {
   const r = String(role || "").toUpperCase();
   return r === "ADMIN" || r === "INTERNAL";

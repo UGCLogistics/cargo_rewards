@@ -1,7 +1,13 @@
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
-import { createRouteHandlerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { createClient } from "@supabase/supabase-js";
+
+
+
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const POINT_VALUE = 250; // 1 poin = 250 rupiah
 
@@ -120,7 +126,7 @@ function emptyKpiResponse(): KpiResponse {
 
 export async function GET(request: Request) {
   try {
-    const supabase = createRouteHandlerSupabaseClient({ cookies, headers });
+    const supabase = createSupabaseServerClient();
 
     const {
       data: { user },

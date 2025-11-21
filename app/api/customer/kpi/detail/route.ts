@@ -1,6 +1,11 @@
+import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
-import { createRouteHandlerSupabaseClient } from "@supabase/auth-helpers-nextjs";
+
+
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type DetailRow = {
   date: string;
@@ -18,10 +23,7 @@ type DetailRow = {
  */
 export async function GET(request: Request) {
   try {
-    const supabase = createRouteHandlerSupabaseClient({
-      cookies,
-      headers,
-    });
+    const supabase = createSupabaseServerClient();
 
     const {
       data: { user },

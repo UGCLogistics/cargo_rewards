@@ -1,6 +1,12 @@
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // app/api/admin/rewards/run-initial/route.ts
 import { NextResponse } from "next/server";
 import {
+
+
   getServiceClient,
   loadProgramConfigs,
   getTierFromSpending,
