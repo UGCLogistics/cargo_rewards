@@ -1,6 +1,10 @@
 import { createClient as createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 type DetailRow = {
   date: string;
   count: number;

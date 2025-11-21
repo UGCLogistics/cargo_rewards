@@ -2,6 +2,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
   loadProgramConfigs,
   HelloDiscountConfig,
 } from "lib/rewardsConfig";

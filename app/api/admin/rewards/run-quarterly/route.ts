@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
   getServiceClient,
   loadProgramConfigs,
   getTierFromSpending,

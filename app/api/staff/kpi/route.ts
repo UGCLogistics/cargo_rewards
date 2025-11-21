@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { cookies, headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+
 const POINT_VALUE = 250; // 1 poin = 250 rupiah
 
 type MembershipCounts = {
