@@ -1,4 +1,3 @@
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -6,8 +5,6 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
-
-
   loadProgramConfigs,
   HelloDiscountConfig,
 } from "lib/rewardsConfig";
@@ -42,6 +39,47 @@ function getHelloDiscountFraction(total: number, cfg?: HelloDiscountConfig) {
     }
   }
   return 0;
+}
+
+/**
+ * Normalisasi berbagai format tanggal ke YYYY-MM-DD
+ * Menerima:
+ * - 2025-12-17
+ * - 2025-12-17T00:00:00Z
+ * - 17/12/2025
+ * - 17-12-2025
+ * - 2025/12/17
+ */
+function normalizeDate(input: string): string {
+  if (!input) return input;
+  const trimmed = input.trim();
+
+  // Sudah format YYYY-MM-DD atau YYYY-MM-DDTHH:mm:ss...
+  const isoMatch = /^(\d{4}-\d{2}-\d{2})/.exec(trimmed);
+  if (isoMatch) {
+    return isoMatch[1];
+  }
+
+  // Format DD/MM/YYYY atau DD-MM-YYYY
+  const dmMatch = /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/.exec(trimmed);
+  if (dmMatch) {
+    const day = dmMatch[1].padStart(2, "0");
+    const month = dmMatch[2].padStart(2, "0");
+    const year = dmMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  // Format YYYY/MM/DD atau YYYY-MM-DD (tanpa waktu)
+  const ymdMatch = /^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/.exec(trimmed);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = ymdMatch[2].padStart(2, "0");
+    const day = ymdMatch[3].padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  // Kalau tidak dikenali, biarkan apa adanya (akan ketahuan error di DB)
+  return trimmed;
 }
 
 // ===== Types =====
@@ -213,7 +251,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // --- 3. Normalisasi rows (punya user_id & publish_rate number) ---
+    // --- 3. Normalisasi rows (punya user_id, publish_rate number, dan date ISO) ---
     const normalizedRows: NormalizedRow[] = [];
 
     rows.forEach((row, idx) => {
@@ -252,8 +290,27 @@ export async function POST(request: Request) {
         );
       }
 
-      const dateStr = String(date).slice(0, 10);
-      const publishNum = Number(publish_rate) || 0;
+      // 🔥 Normalisasi tanggal di sini
+      let dateStr: string;
+      try {
+        dateStr = normalizeDate(String(date));
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          throw new Error(
+            `Format tanggal tidak dikenali: "${date}". Gunakan YYYY-MM-DD atau DD/MM/YYYY`
+          );
+        }
+      } catch (e: any) {
+        throw new Error(
+          `Row ${idx + 1}: ${e?.message || "Format tanggal tidak valid"}`
+        );
+      }
+
+      const publishNum = Number(publish_rate);
+      if (Number.isNaN(publishNum) || publishNum <= 0) {
+        throw new Error(
+          `Row ${idx + 1}: publish_rate tidak valid ("${publish_rate}")`
+        );
+      }
 
       normalizedRows.push({
         idx,
