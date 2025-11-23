@@ -298,7 +298,7 @@ export default function DashboardLayout({
                 type="button"
                 onClick={() => setCollapsed((c) => !c)}
                 className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-black/20 text-[11px] text-slate-200 hover:bg-white/10"
-                aria-label={collapsed ? "Buka sidebar" : "Tutup sidebar"}
+                aria-label={collapsed ? "expand" : "collapse"}
               >
                 {collapsed ? "›" : "‹"}
               </button>

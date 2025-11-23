@@ -420,8 +420,7 @@ export default function RewardsHistoryPage() {
 
   const currentCompanyName =
     role === "INTERNAL"
-      ? customers.find((c) => c.user_id === selectedUserId)?.company_name ??
-        ""
+      ? customers.find((c) => c.user_id === selectedUserId)?.company_name ?? ""
       : undefined;
 
   // ==== APPROVER DISPLAY (Nama - Company) ====
@@ -533,7 +532,8 @@ export default function RewardsHistoryPage() {
           Riwayat Rewards
         </h1>
         <p className="text-sm text-gray-400">
-          Lihat riwayat perolehan poin, diskon, cashback, dan penukaran rewards.
+          Lihat riwayat perolehan poin, diskon, cashback, dan penukaran
+          rewards.
         </p>
       </header>
 
@@ -769,10 +769,7 @@ export default function RewardsHistoryPage() {
                   </span>{" "}
                   -{" "}
                   <span className="font-semibold text-gray-200">
-                    {Math.min(
-                      page * ROWS_PER_PAGE,
-                      filteredHistory.length
-                    )}
+                    {Math.min(page * ROWS_PER_PAGE, filteredHistory.length)}
                   </span>{" "}
                   dari{" "}
                   <span className="font-semibold text-gray-200">
@@ -803,9 +800,7 @@ export default function RewardsHistoryPage() {
                   </button>
                   <span>
                     Halaman{" "}
-                    <span className="font-semibold text-gray-100">
-                      {page}
-                    </span>{" "}
+                    <span className="font-semibold text-gray-100">{page}</span>{" "}
                     /{" "}
                     <span className="font-semibold text-gray-100">
                       {totalPages}

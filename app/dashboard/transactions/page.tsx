@@ -36,12 +36,20 @@ export default function TransactionsPage() {
   // filter perusahaan (dropdown)
   const [selectedCompany, setSelectedCompany] = useState<string>("ALL");
 
-  const fetchData = async () => {
+  const fetchData = async (override?: {
+    startDate?: string;
+    endDate?: string;
+    company?: string;
+  }) => {
     if (!user) return;
 
     try {
       setLoading(true);
       setError(null);
+
+      const effectiveStartDate = override?.startDate ?? startDate;
+      const effectiveEndDate = override?.endDate ?? endDate;
+      const effectiveCompany = override?.company ?? selectedCompany;
 
       const params = new URLSearchParams();
 
@@ -54,16 +62,16 @@ export default function TransactionsPage() {
       }
 
       // filter tanggal
-      if (startDate) params.set("startDate", startDate);
-      if (endDate) params.set("endDate", endDate);
+      if (effectiveStartDate) params.set("startDate", effectiveStartDate);
+      if (effectiveEndDate) params.set("endDate", effectiveEndDate);
 
       // filter perusahaan (hanya untuk internal)
       if (
         isInternal &&
-        selectedCompany &&
-        selectedCompany !== "ALL"
+        effectiveCompany &&
+        effectiveCompany !== "ALL"
       ) {
-        params.set("companyName", selectedCompany);
+        params.set("companyName", effectiveCompany);
       }
 
       const qs = params.toString();
@@ -131,6 +139,22 @@ export default function TransactionsPage() {
 
   const handleNextPage = () => {
     setPage((prev) => Math.min(totalPages - 1, prev + 1));
+  };
+
+  // RESET FILTER (tanggal + perusahaan) + reload data default
+  const handleResetFilters = () => {
+    setStartDate("");
+    setEndDate("");
+    if (isInternal) {
+      setSelectedCompany("ALL");
+    }
+    setPage(0);
+
+    fetchData({
+      startDate: "",
+      endDate: "",
+      company: isInternal ? "ALL" : selectedCompany,
+    });
   };
 
   // --- Export ke "Excel" (CSV) — mengikuti data yang sudah difilter server ---
@@ -201,6 +225,7 @@ export default function TransactionsPage() {
         <h1 className="text-xl font-semibold">Riwayat Transaksi</h1>
 
         <button
+          type="button"
           onClick={exportToCsv}
           className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20 border border-white/20 shadow-[0_10px_35px_rgba(15,23,42,0.7)]"
           disabled={transactions.length === 0}
@@ -259,13 +284,19 @@ export default function TransactionsPage() {
               </option>
             ))}
           </select>
-          {!isInternal
-          }
         </div>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
           <button
-            onClick={fetchData}
+            type="button"
+            onClick={handleResetFilters}
+            className="inline-flex items-center justify-center rounded-xl border border-white/25 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-white/10"
+          >
+            Reset filter
+          </button>
+          <button
+            type="button"
+            onClick={() => fetchData()}
             className="inline-flex items-center justify-center rounded-xl bg-[#ff4600] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_35px_rgba(255,70,0,0.65)] hover:bg-[#ff5d1f] transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Terapkan Filter
@@ -346,6 +377,7 @@ export default function TransactionsPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={handlePrevPage}
                 disabled={currentPage === 0}
                 className="px-2 py-1 rounded border border-white/20 disabled:opacity-40"
@@ -356,6 +388,7 @@ export default function TransactionsPage() {
                 Hal {currentPage + 1} / {totalPages}
               </span>
               <button
+                type="button"
                 onClick={handleNextPage}
                 disabled={currentPage >= totalPages - 1}
                 className="px-2 py-1 rounded border border-white/20 disabled:opacity-40"
