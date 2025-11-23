@@ -33,6 +33,9 @@ export default function TransactionsPage() {
   const [endDate, setEndDate] = useState("");
   const [page, setPage] = useState(0); // halaman mulai dari 0
 
+  // filter perusahaan (dropdown)
+  const [selectedCompany, setSelectedCompany] = useState<string>("ALL");
+
   const fetchData = async () => {
     if (!user) return;
 
@@ -67,6 +70,7 @@ export default function TransactionsPage() {
 
       setTransactions((json.data as Transaction[]) || []);
       setPage(0); // reset ke halaman pertama setiap kali fetch
+      setSelectedCompany(isInternal ? "ALL" : ""); // internal -> ALL, customer -> nanti di-set dari data
     } catch (err: any) {
       setError(err.message || "Gagal memuat transaksi");
       setTransactions([]);
@@ -80,16 +84,49 @@ export default function TransactionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Untuk CUSTOMER: otomatis set perusahaan ke perusahaan miliknya saja
+  useEffect(() => {
+    if (!isInternal && transactions.length > 0) {
+      const firstName = transactions[0].company_name || "Tanpa Nama";
+      setSelectedCompany(firstName);
+    }
+  }, [isInternal, transactions]);
+
+  // --- daftar opsi perusahaan (berdasarkan data yang sudah di-load) ---
+  const companyOptions = (() => {
+    const set = new Set<string>();
+    transactions.forEach((trx) => {
+      const label = trx.company_name || "Tanpa Nama";
+      set.add(label);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  })();
+
+  // --- apply filter perusahaan di client side ---
+  const filteredTransactions = transactions.filter((trx) => {
+    // Internal: kalau ALL -> tidak filter
+    if (isInternal && selectedCompany === "ALL") return true;
+
+    // Kalau selectedCompany masih kosong (customer sebelum efek jalan) -> tampilkan semua
+    if (!selectedCompany) return true;
+
+    const name = trx.company_name || "Tanpa Nama";
+    return name === selectedCompany;
+  });
+
   const totalPages =
-    transactions.length === 0
+    filteredTransactions.length === 0
       ? 1
-      : Math.ceil(transactions.length / PAGE_SIZE);
+      : Math.ceil(filteredTransactions.length / PAGE_SIZE);
 
   const currentPage = Math.min(page, totalPages - 1);
   const startIndex = currentPage * PAGE_SIZE;
-  const paginated = transactions.slice(startIndex, startIndex + PAGE_SIZE);
+  const paginated = filteredTransactions.slice(
+    startIndex,
+    startIndex + PAGE_SIZE
+  );
 
-  const from = transactions.length === 0 ? 0 : startIndex + 1;
+  const from = filteredTransactions.length === 0 ? 0 : startIndex + 1;
   const to = startIndex + paginated.length;
 
   const handlePrevPage = () => {
@@ -100,9 +137,9 @@ export default function TransactionsPage() {
     setPage((prev) => Math.min(totalPages - 1, prev + 1));
   };
 
-  // --- Export ke "Excel" (CSV) ---
+  // --- Export ke "Excel" (CSV) — mengikuti filter perusahaan & tanggal ---
   const exportToCsv = () => {
-    if (!transactions || transactions.length === 0) return;
+    if (!filteredTransactions || filteredTransactions.length === 0) return;
 
     const escapeCsv = (value: any) => {
       if (value === null || value === undefined) return '""';
@@ -122,7 +159,7 @@ export default function TransactionsPage() {
       "UserId",
     ];
 
-    const rows = transactions.map((trx, idx) => {
+    const rows = filteredTransactions.map((trx, idx) => {
       const publish = Number(trx.publish_rate) || 0;
       const disc = Number(trx.discount_amount) || 0;
       const ongkir = publish - disc;
@@ -169,39 +206,74 @@ export default function TransactionsPage() {
 
         <button
           onClick={exportToCsv}
-          className="rounded bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
-          disabled={transactions.length === 0}
+          className="rounded-xl bg-white/10 px-3 py-1 text-xs hover:bg-white/20 border border-white/20 shadow-[0_10px_35px_rgba(15,23,42,0.7)]"
+          disabled={filteredTransactions.length === 0}
         >
           Export Excel (.csv)
         </button>
       </div>
 
-      {/* Filter tanggal */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <label className="flex items-center gap-1">
-          Start:
+      {/* Filter tanggal + perusahaan (dark glassmorphism) */}
+      <div className="glass flex flex-wrap items-end gap-3 text-xs rounded-2xl px-3 py-3 bg-slate-900/60 border border-white/10 shadow-[0_18px_45px_rgba(15,23,42,0.85)]">
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] text-slate-200">Start</span>
           <input
             type="date"
-            className="bg-transparent border border-white/20 rounded px-2 py-1 text-xs"
+            className="bg-slate-900/80 border border-white/20 rounded-lg px-2 py-1 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
-        </label>
-        <label className="flex items-center gap-1">
-          End:
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-[11px] text-slate-200">End</span>
           <input
             type="date"
-            className="bg-transparent border border-white/20 rounded px-2 py-1 text-xs"
+            className="bg-slate-900/80 border border-white/20 rounded-lg px-2 py-1 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
-        </label>
-        <button
-          onClick={fetchData}
-          className="rounded bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
-        >
-          Terapkan Filter
-        </button>
+        </div>
+
+        {/* Dropdown perusahaan */}
+        <div className="flex flex-col gap-1 min-w-[180px]">
+          <span className="text-[11px] text-slate-200">Perusahaan</span>
+          <select
+            value={isInternal ? selectedCompany : selectedCompany || (companyOptions[0] ?? "")}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+            disabled={!isInternal || companyOptions.length <= 1}
+            className="rounded-lg bg-slate-900/80 border border-white/25 text-slate-100 px-2 py-1.5 text-xs shadow-[0_0_0_1px_rgba(148,163,184,0.35)] focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
+          >
+            {isInternal && (
+              <option value="ALL" className="bg-slate-900 text-slate-100">
+                Semua Perusahaan
+              </option>
+            )}
+            {companyOptions.map((name) => (
+              <option
+                key={name}
+                value={name}
+                className="bg-slate-900 text-slate-100"
+              >
+                {name}
+              </option>
+            ))}
+          </select>
+          {!isInternal && (
+            <p className="text-[10px] text-slate-400">
+              (Customer hanya dapat melihat perusahaannya sendiri)
+            </p>
+          )}
+        </div>
+
+        <div className="ml-auto">
+          <button
+            onClick={fetchData}
+            className="inline-flex items-center justify-center rounded-xl bg-[#ff4600] px-4 py-1.5 text-xs font-semibold text-white shadow-[0_10px_35px_rgba(255,70,0,0.65)] hover:bg-[#ff5d1f] transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            Terapkan Filter
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -214,10 +286,10 @@ export default function TransactionsPage() {
         </p>
       ) : (
         <>
-          <div className="glass rounded-xl overflow-x-auto">
+          <div className="glass rounded-xl overflow-x-auto border border-white/10 bg-slate-900/60">
             <table className="min-w-full text-[11px]">
               <thead>
-                <tr className="border-b border-white/10 bg-white/5">
+                <tr className="border-b border-white/10 bg-white/5/40">
                   <th className="px-3 py-2 text-left">No</th>
                   <th className="px-3 py-2 text-left">Perusahaan</th>
                   <th className="px-3 py-2 text-left">Tanggal</th>
@@ -236,7 +308,7 @@ export default function TransactionsPage() {
                   return (
                     <tr
                       key={trx.id}
-                      className="border-t border-white/10 hover:bg-white/5"
+                      className="border-t border-white/10 hover:bg-white/5/40"
                     >
                       <td className="px-3 py-2">{rowNo}</td>
                       <td className="px-3 py-2">
@@ -271,7 +343,7 @@ export default function TransactionsPage() {
               </span>{" "}
               dari{" "}
               <span className="font-semibold">
-                {transactions.length}
+                {filteredTransactions.length}
               </span>{" "}
               transaksi
             </div>
