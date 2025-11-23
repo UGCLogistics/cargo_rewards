@@ -19,7 +19,7 @@ function getServiceClient() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-function toNumber(value: any): number | null {
+function toNumber(value: unknown): number | null {
   if (value === null || value === undefined) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
       new Set(
         ledgers
           .map((row) => row.ref_id)
-          .filter((v: any) => v !== null && v !== undefined)
+          .filter((v: unknown) => v !== null && v !== undefined)
       )
     );
 
@@ -117,15 +117,19 @@ export async function GET(req: NextRequest) {
     for (const row of ledgers) {
       const type = String(row.type || "").toUpperCase();
       const rewardDate = row.created_at;
-      const tx = row.ref_id != null ? txMap[String(row.ref_id)] : undefined;
+      const tx =
+        row.ref_id !== null && row.ref_id !== undefined
+          ? txMap[String(row.ref_id)]
+          : undefined;
 
       const points = toNumber(row.points);
       const amount = toNumber(row.amount);
 
       const publishRate = tx ? toNumber(tx.publish_rate) : null;
-      const discountAmount = tx ? toNumber(tx.discount_amount) : null;
-      const cashbackFromTx = tx ? toNumber(tx.cashback_amount) : null;
+      const discountAmount = tx ? toNumber((tx as any).discount_amount) : null;
+      const cashbackFromTx = tx ? toNumber((tx as any).cashback_amount) : null;
 
+      // untuk multiplier, kita pakai publishRate (kalau ada)
       const baseAmount = publishRate;
 
       // multiplier = (points * 10.000) / baseAmount
@@ -178,7 +182,7 @@ export async function GET(req: NextRequest) {
       } else if (type.includes("BONUS")) {
         entry.category = "BONUS";
       } else if (type === "ADJUST") {
-        // tetap OTHER, tapi nanti di FE kita sembunyikan baris negatif
+        // tetap OTHER, tapi di FE kita bisa sembunyikan baris negatif
         entry.category = "OTHER";
       }
 
@@ -235,7 +239,7 @@ export async function GET(req: NextRequest) {
       history.push(entry);
     }
 
-    // urutkan terbaru di atas (pakai rewardDate)
+    // urutkan terbaru di atas (pakai rewardDate / created_at)
     history.sort((a, b) => {
       const tA = new Date(a.rewardDate ?? a.created_at ?? 0).getTime();
       const tB = new Date(b.rewardDate ?? b.created_at ?? 0).getTime();
