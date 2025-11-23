@@ -1,8 +1,10 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import supabase from '../../lib/supabaseClient'; // sesuaikan jika path beda
+import ugcLogo from "public/logougcorangewhite.png";
 
 type AccountType = 'CUSTOMER' | 'INTERNAL';
 
@@ -162,18 +164,28 @@ export default function RegisterPage() {
 
         <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_0_40px_rgba(15,23,42,0.8)] px-6 py-7">
           {/* Header */}
-          <div className="mb-5 text-center">
-            <p className="text-[10px] tracking-[0.25em] text-slate-400 uppercase mb-1">
-              C.A.R.G.O Rewards
-            </p>
-            <h1 className="text-2xl font-semibold text-white">
-              Registrasi Pelanggan Baru
-            </h1>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Data ini otomatis menjadi profil pelanggan di sistem loyalty UGC
-              Logistics.
-            </p>
+          <div className="flex items-center justify-center mb-4">
+            <Image
+              src={ugcLogo}
+              alt="UGC Logistics"
+              width={320}
+              height={80}
+              className="h-16 w-auto"
+              priority
+            />
           </div>
+            <div className="mb-5 text-center">
+              <p className="text-[10px] tracking-[0.25em] text-slate-400 uppercase mb-1">
+                C.A.R.G.O Rewards
+              </p>
+              <h1 className="text-2xl font-semibold text-white">
+                Registrasi Pelanggan Baru
+              </h1>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Data ini otomatis menjadi profil pelanggan di sistem loyalty UGC
+                Logistics.
+              </p>
+            </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* PIC */}

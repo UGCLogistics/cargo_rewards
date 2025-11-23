@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-
-
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * Supabase service client (bypass RLS).
@@ -24,10 +21,11 @@ function getServiceClient() {
  * GET /api/transactions
  *
  * Query params:
- *  - scope=all        → ambil semua transaksi
- *  - scope=self&userId=<uuid> → hanya transaksi user tersebut
+ *  - scope=all        → ambil semua transaksi (internal)
+ *  - scope=self&userId=<uuid> → hanya transaksi user tersebut (customer)
  *  - startDate=YYYY-MM-DD (opsional)
  *  - endDate=YYYY-MM-DD   (opsional)
+ *  - companyName=<string>  (opsional, hanya dipakai untuk scope=all)
  *
  * Output: { data: [ { ..., company_name } ] }
  */
@@ -40,6 +38,7 @@ export async function GET(request: Request) {
     const userIdParam = url.searchParams.get("userId");
     const startDate = url.searchParams.get("startDate");
     const endDate = url.searchParams.get("endDate");
+    const companyName = url.searchParams.get("companyName");
 
     // --- Ambil transaksi dasar ---
     let query = supabase
@@ -48,6 +47,7 @@ export async function GET(request: Request) {
       .order("date", { ascending: false });
 
     if (scope === "self") {
+      // Hanya transaksi milik user tertentu (untuk customer)
       if (!userIdParam) {
         return NextResponse.json(
           { error: "userId required for scope=self" },
@@ -55,8 +55,36 @@ export async function GET(request: Request) {
         );
       }
       query = query.eq("user_id", userIdParam);
+    } else if (scope === "all" && companyName) {
+      // Internal + filter perusahaan: batasi user_id yang company_name-nya cocok
+      const { data: companyCustomers, error: companyErr } = await supabase
+        .from("customers")
+        .select("user_id")
+        .eq("company_name", companyName);
+
+      if (companyErr) {
+        console.error(
+          "Failed to fetch customers for company filter:",
+          companyErr.message
+        );
+        return NextResponse.json(
+          { error: companyErr.message },
+          { status: 500 }
+        );
+      }
+
+      const filterUserIds = (companyCustomers ?? [])
+        .map((c: any) => c.user_id as string)
+        .filter((v) => !!v);
+
+      // Kalau tidak ada customer untuk perusahaan tsb → langsung return kosong
+      if (filterUserIds.length === 0) {
+        return NextResponse.json({ data: [] }, { status: 200 });
+      }
+
+      query = query.in("user_id", filterUserIds);
     }
-    // scope=all → tidak pakai filter user_id
+    // scope=all tanpa companyName → ambil semua user
 
     if (startDate) query = query.gte("date", startDate);
     if (endDate) query = query.lte("date", endDate);

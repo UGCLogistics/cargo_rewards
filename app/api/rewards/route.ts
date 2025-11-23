@@ -1,12 +1,9 @@
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 // app/api/rewards/route.ts
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-
 
 /**
  * Supabase service client (pakai SERVICE_ROLE, bypass RLS).
@@ -116,24 +113,22 @@ export async function GET(req: NextRequest) {
     // 3) susun history gabungan
     const history: any[] = [];
 
-    // a. dari reward_ledgers (perolehan poin / cashback / bonus)
+    // a. dari reward_ledgers (perolehan poin / cashback / bonus / adjust)
     for (const row of ledgers) {
       const type = String(row.type || "").toUpperCase();
       const rewardDate = row.created_at;
       const tx = row.ref_id != null ? txMap[String(row.ref_id)] : undefined;
 
       const points = toNumber(row.points);
+      const amount = toNumber(row.amount);
 
-      // base transaksi & diskon & cashback dari tabel transactions
       const publishRate = tx ? toNumber(tx.publish_rate) : null;
       const discountAmount = tx ? toNumber(tx.discount_amount) : null;
       const cashbackFromTx = tx ? toNumber(tx.cashback_amount) : null;
 
-      // base perhitungan poin = nilai transaksi (publish_rate)
       const baseAmount = publishRate;
 
-      // multiplier = perolehan poin / (base transaksi / 10.000)
-      //            = (points * 10.000) / baseAmount
+      // multiplier = (points * 10.000) / baseAmount
       let pointsMultiplier: number | null = null;
       if (points != null && baseAmount && baseAmount > 0) {
         pointsMultiplier = (points * 10_000) / baseAmount;
@@ -142,11 +137,11 @@ export async function GET(req: NextRequest) {
       const entry: any = {
         id: `ledger-${row.id}`,
         source: "LEDGER",
-        category: "OTHER",
+        category: "OTHER", // default
         type,
         transactionDate: tx?.date ?? null,
         rewardDate,
-        created_at: rewardDate, // buat sorting/filter di FE
+        created_at: rewardDate,
         title: row.note || type || "Aktivitas rewards",
         note: row.note,
         pointsDelta: points,
@@ -176,12 +171,15 @@ export async function GET(req: NextRequest) {
         entry.title = "Poin dari transaksi";
       } else if (type.includes("CASHBACK")) {
         entry.category = "CASHBACK";
-        const extra = toNumber(row.amount);
+        const extra = amount;
         if (extra != null) {
           entry.cashbackAmount = (entry.cashbackAmount ?? 0) + extra;
         }
       } else if (type.includes("BONUS")) {
         entry.category = "BONUS";
+      } else if (type === "ADJUST") {
+        // tetap OTHER, tapi nanti di FE kita sembunyikan baris negatif
+        entry.category = "OTHER";
       }
 
       history.push(entry);
@@ -191,26 +189,46 @@ export async function GET(req: NextRequest) {
     for (const row of redemptions) {
       const rewardDate = row.created_at;
 
+      const pointsUsed =
+        row.points_used != null ? Number(row.points_used) : null;
+      const amount = toNumber(row.amount);
+
       const entry: any = {
         id: `redemption-${row.id}`,
         source: "REDEMPTION",
         category: "REDEMPTION",
-        type: row.kind,
+        type: row.kind, // CREDIT / CASH_OUT
         transactionDate: null,
         rewardDate,
         created_at: rewardDate,
         title: row.kind || "Penukaran poin",
-        note: null,
-        pointsDelta: row.points_used ? -Number(row.points_used) : null,
+        // catatan admin (voucher_note) dipakai sebagai note utama
+        note: row.voucher_note ?? null,
+        pointsDelta: pointsUsed != null ? -pointsUsed : null,
         baseAmount: null,
         discountAmount: null,
-        cashbackAmount: toNumber(row.amount),
+        cashbackAmount: amount,
         pointsMultiplier: null,
         status: row.status || null,
         redemption: {
           id: row.id,
+          user_id: row.user_id,
+          kind: row.kind,
+          amount: amount,
+          points_used: pointsUsed,
+          status: row.status,
           approved_at: row.approved_at,
           approved_by: row.approved_by,
+          processed_at: row.processed_at,
+          bank_name: row.bank_name,
+          bank_account_number: row.bank_account_number,
+          bank_account_holder: row.bank_account_holder,
+          voucher_code: row.voucher_code,
+          voucher_note: row.voucher_note,
+          voucher_proof_url: row.voucher_proof_url,
+          reject_reason: row.reject_reason,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
         },
       };
 
