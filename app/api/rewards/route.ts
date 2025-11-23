@@ -6,17 +6,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 /**
- * Supabase service client (pakai SERVICE_ROLE, bypass RLS).
+ * Supabase service client (bypass RLS).
+ * - Utamakan SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (standar Supabase)
+ * - Fallback ke NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE
  */
 function getServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE;
+  const url =
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
 
   if (!url || !key) {
     throw new Error("Supabase environment variables are missing");
   }
 
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+    },
+  });
 }
 
 function toNumber(value: unknown): number | null {
@@ -96,7 +104,7 @@ export async function GET(req: NextRequest) {
       const { data: txData, error: txError } = await supabase
         .from("transactions")
         .select("*")
-        .in("id", refIds);
+        .in("id", refIds as any); // refIds = list id transaksi
 
       if (txError) {
         return NextResponse.json(
@@ -116,7 +124,7 @@ export async function GET(req: NextRequest) {
     // a. dari reward_ledgers (perolehan poin / cashback / bonus / adjust)
     for (const row of ledgers) {
       const type = String(row.type || "").toUpperCase();
-      const rewardDate = row.created_at;
+      const rewardDate = row.created_at as string;
       const tx =
         row.ref_id !== null && row.ref_id !== undefined
           ? txMap[String(row.ref_id)]
@@ -126,10 +134,9 @@ export async function GET(req: NextRequest) {
       const amount = toNumber(row.amount);
 
       const publishRate = tx ? toNumber(tx.publish_rate) : null;
-      const discountAmount = tx ? toNumber((tx as any).discount_amount) : null;
-      const cashbackFromTx = tx ? toNumber((tx as any).cashback_amount) : null;
+      const discountAmount = tx ? toNumber(tx.discount_amount) : null;
+      const cashbackFromTx = tx ? toNumber(tx.cashback_amount) : null;
 
-      // untuk multiplier, kita pakai publishRate (kalau ada)
       const baseAmount = publishRate;
 
       // multiplier = (points * 10.000) / baseAmount
@@ -182,7 +189,7 @@ export async function GET(req: NextRequest) {
       } else if (type.includes("BONUS")) {
         entry.category = "BONUS";
       } else if (type === "ADJUST") {
-        // tetap OTHER, tapi di FE kita bisa sembunyikan baris negatif
+        // tetap OTHER, tapi baris negatif bisa disembunyikan di FE
         entry.category = "OTHER";
       }
 
@@ -191,7 +198,7 @@ export async function GET(req: NextRequest) {
 
     // b. dari redemptions (penukaran poin)
     for (const row of redemptions) {
-      const rewardDate = row.created_at;
+      const rewardDate = row.created_at as string;
 
       const pointsUsed =
         row.points_used != null ? Number(row.points_used) : null;
@@ -246,11 +253,26 @@ export async function GET(req: NextRequest) {
       return tB - tA;
     });
 
+    // meta kecil buat bantu lo cross-check cepat
+    const meta = {
+      userId,
+      ledgerCount: ledgers.length,
+      redemptionCount: redemptions.length,
+      refIdCount: refIds.length,
+      txJoinedCount: Object.keys(txMap).length,
+      ledgerTypeCounts: ledgers.reduce<Record<string, number>>((acc, row) => {
+        const t = String(row.type || "").toUpperCase();
+        acc[t] = (acc[t] ?? 0) + 1;
+        return acc;
+      }, {}),
+    };
+
     return NextResponse.json(
       {
         history,
         ledgers,
         redemptions,
+        meta,
       },
       { status: 200 }
     );
