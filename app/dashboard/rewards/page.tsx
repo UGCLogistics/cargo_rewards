@@ -119,7 +119,9 @@ export default function RewardsHistoryPage() {
 
     const loadCustomers = async () => {
       try {
-        const res = await fetch("/api/customers-simple", { cache: "no-store" });
+        const res = await fetch("/api/customers-simple", {
+          cache: "no-store",
+        });
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error || "Gagal memuat customer");
         setCustomers(json.customers || []);
@@ -385,10 +387,9 @@ export default function RewardsHistoryPage() {
       item.note ?? "",
     ]);
 
-    const csv =
-      [header, ...rows]
-        .map((row) => row.map(escape).join(","))
-        .join("\r\n");
+    const csv = [header, ...rows]
+      .map((row) => row.map(escape).join(","))
+      .join("\r\n");
 
     const blob = new Blob([csv], {
       type: "text/csv;charset=utf-8;",
@@ -435,7 +436,8 @@ export default function RewardsHistoryPage() {
     const loadApprover = async () => {
       try {
         const res = await fetch(
-          `/api/admin/user-brief?userId=${encodeURIComponent(targetId)}`
+          `/api/admin/user-brief?userId=${encodeURIComponent(targetId)}`,
+          { cache: "no-store" }
         );
         const json = await res.json();
         if (!res.ok || !json.user) return;
@@ -532,8 +534,7 @@ export default function RewardsHistoryPage() {
           Riwayat Rewards
         </h1>
         <p className="text-sm text-gray-400">
-          Lihat riwayat perolehan poin, diskon, cashback, dan penukaran
-          rewards.
+          Lihat riwayat perolehan poin, diskon, cashback, dan penukaran rewards.
         </p>
       </header>
 
@@ -1014,8 +1015,7 @@ export default function RewardsHistoryPage() {
                 ) : (
                   <p className="text-xs text-gray-400">
                     Tidak ada jurnal ADJUST spesifik yang terdeteksi untuk
-                    penukaran ini. Kemungkinan sistem mencatatnya secara
-                    agregat.
+                    penukaran ini. Kemungkinan sistem mencatatnya secara agregat.
                   </p>
                 )}
               </div>
