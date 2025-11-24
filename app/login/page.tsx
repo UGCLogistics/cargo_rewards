@@ -1,171 +1,189 @@
-'use client';
+"use client";
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import supabase from '../../lib/supabaseClient'; // sesuaikan kalau path berbeda
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import supabase from "../../lib/supabaseClient";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [infoMsg, setInfoMsg] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [infoMsg, setInfoMsg] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrorMsg('');
-    setInfoMsg('');
+    setErrorMsg(null);
+    setInfoMsg(null);
 
     if (!email || !password) {
-      setErrorMsg('Email dan kata sandi wajib diisi.');
+      setErrorMsg("Email dan password wajib diisi.");
       return;
     }
 
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
+    try {
+      setIsLoading(true);
 
-    if (error) {
-      console.error(error);
-      setErrorMsg(error.message || 'Gagal masuk. Periksa kembali data Anda.');
-      return;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrorMsg(error.message || "Gagal login. Periksa kembali email & password.");
+        return;
+      }
+
+      if (!data?.session) {
+        setErrorMsg("Gagal membuat sesi login. Silakan coba lagi.");
+        return;
+      }
+
+      // Login sukses → arahkan ke dashboard
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setErrorMsg("Terjadi kesalahan saat login. Silakan coba lagi.");
+    } finally {
+      setIsLoading(false);
     }
-
-    router.push('/dashboard');
   };
 
-  const handleForgotPassword = async () => {
-    setErrorMsg('');
-    setInfoMsg('');
+  const handleResetPassword = async () => {
+    setErrorMsg(null);
+    setInfoMsg(null);
 
     if (!email) {
-      setErrorMsg('Masukkan dulu email yang terdaftar untuk reset kata sandi.');
+      setErrorMsg("Masukkan email terlebih dahulu sebelum reset password.");
       return;
     }
 
-    setResetLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email /* , {
-      // redirectTo: `${window.location.origin}/reset-password`,
-    } */);
-    setResetLoading(false);
+    try {
+      setResetLoading(true);
 
-    if (error) {
-      console.error(error);
-      setErrorMsg(error.message || 'Gagal mengirim email reset kata sandi.');
-      return;
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/reset-password`
+          : undefined;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+
+      if (error) {
+        setErrorMsg(
+          error.message || "Gagal mengirim link reset password. Coba lagi beberapa saat."
+        );
+        return;
+      }
+
+      setInfoMsg(
+        "Link reset password sudah dikirim ke email (jika terdaftar). Silakan cek inbox/spam."
+      );
+    } catch (err: any) {
+      console.error("Reset password error:", err);
+      setErrorMsg("Terjadi kesalahan saat mengirim link reset password.");
+    } finally {
+      setResetLoading(false);
     }
-
-    setInfoMsg(
-      'Link untuk reset kata sandi sudah dikirim ke email Anda. Silakan cek inbox/spam.'
-    );
   };
 
   return (
-    <div className="min-h-screen bg-[#050816] flex items-center justify-center px-4">
-      <div className="relative w-full max-w-md">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+      <div className="max-w-md w-full relative">
         {/* Glow background */}
-        <div className="pointer-events-none absolute inset-0 -z-10 blur-3xl opacity-40 bg-[radial-gradient(circle_at_top,_#ff4600_0,_transparent_55%),_radial-gradient(circle_at_bottom,_#0ea5e9_0,_transparent_55%)]" />
+        <div className="absolute inset-0 blur-3xl opacity-40 bg-gradient-to-br from-orange-500 via-amber-400 to-sky-500 pointer-events-none" />
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_0_40px_rgba(15,23,42,0.8)] px-7 py-8">
-          {/* Header */}
+        <div className="relative bg-slate-900/80 border border-slate-700/70 shadow-2xl shadow-black/50 rounded-2xl p-8 backdrop-blur-xl">
           <div className="mb-6 text-center">
-            <p className="text-[10px] tracking-[0.25em] text-slate-400 uppercase mb-1">
-              C.A.R.G.O Rewards
-            </p>
-            <h1 className="text-2xl font-semibold text-white">
-              Masuk ke Dashboard
+            <h1 className="text-sm font-semibold tracking-[0.3em] text-slate-400 uppercase">
+              CARGO Rewards
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
-              Gunakan email dan kata sandi yang telah terdaftar.
+            <h2 className="mt-3 text-2xl font-semibold text-slate-50">
+              Login Portal
+            </h2>
+            <p className="mt-1 text-sm text-slate-400">
+              Masuk untuk melihat transaksi, poin, dan rewards Anda.
             </p>
           </div>
+
+          {/* Alert error */}
+          {errorMsg && (
+            <div className="mb-4 rounded-lg border border-red-500/40 bg-red-950/60 px-3 py-2 text-sm text-red-100">
+              {errorMsg}
+            </div>
+          )}
+
+          {/* Alert info */}
+          {infoMsg && (
+            <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-950/60 px-3 py-2 text-sm text-emerald-100">
+              {infoMsg}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-xs font-medium text-slate-200 mb-1">
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
                 Email
               </label>
               <input
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
                 placeholder="nama@perusahaan.com"
-                className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
               />
             </div>
 
-            {/* Password + lupa password */}
+            {/* Password */}
             <div>
-              <label className="block text-xs font-medium text-slate-200 mb-1">
-                Kata sandi
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                Password
               </label>
               <input
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan kata sandi"
-                className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
+                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                placeholder="Masukkan password"
               />
-              <div className="mt-2 flex justify-end">
-                {/* ⬇️ Tombol Lupa Password dengan style baru */}
-                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={resetLoading}
-                  className="text-[11px] px-3 py-1 rounded-full border border-[#ff4600] bg-white text-[#ff4600] hover:bg-[#ff4600] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {resetLoading ? 'Mengirim link reset…' : 'Lupa kata sandi?'}
-                </button>
-              </div>
             </div>
 
-            {/* Error message */}
-            {errorMsg && (
-              <div className="rounded-xl bg-red-500/10 border border-red-500/40 px-3 py-2 text-[11px] text-red-300">
-                {errorMsg}
-              </div>
-            )}
+            {/* Lupa password */}
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">
+                Lupa password?
+              </span>
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                disabled={resetLoading}
+                className="text-orange-400 hover:text-orange-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {resetLoading ? "Mengirim link..." : "Kirim link reset ke email"}
+              </button>
+            </div>
 
-            {/* Info message */}
-            {infoMsg && (
-              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/40 px-3 py-2 text-[11px] text-emerald-300">
-                {infoMsg}
-              </div>
-            )}
-
-            {/* Button masuk */}
             <button
               type="submit"
-              disabled={loading}
-              className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-[#ff4600] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(255,70,0,0.45)] hover:bg-[#ff5f24] disabled:opacity-60 disabled:cursor-not-allowed transition"
+              disabled={isLoading}
+              className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-orange-900/40 hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? 'Memproses…' : 'Masuk'}
+              {isLoading ? "Memproses..." : "Masuk ke Portal"}
             </button>
           </form>
 
-          <div className="mt-5 flex flex-col items-center gap-1">
-            <p className="text-[11px] text-slate-400">
-              Belum punya akun?{' '}
-              <a
-                href="/register"
-                className="font-medium text-[#ffb366] hover:text-[#ffd0a0]"
-              >
-                Daftar
-              </a>
-            </p>
-            <a
-              href="/"
-              className="text-[11px] text-slate-500 hover:text-slate-300"
-            >
-              ← Kembali ke halaman utama
-            </a>
-          </div>
+          <p className="mt-4 text-[11px] text-center text-slate-500">
+            Powered by UGC Logistics – CARGO Rewards Portal
+          </p>
         </div>
       </div>
     </div>
