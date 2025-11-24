@@ -109,6 +109,7 @@ export default function AdminMembershipPage() {
       if (params.toString()) url += `?${params.toString()}`;
 
       const res = await fetch(url, {
+        cache: "no-store",
         headers: {
           "x-role": role,
         },
@@ -219,10 +220,7 @@ export default function AdminMembershipPage() {
   );
 
   const tierAgg = useMemo(() => {
-    const base: Record<
-      Tier,
-      { tier: Tier; count: number; total: number }
-    > = {
+    const base: Record<Tier, { tier: Tier; count: number; total: number }> = {
       SILVER: { tier: "SILVER", count: 0, total: 0 },
       GOLD: { tier: "GOLD", count: 0, total: 0 },
       PLATINUM: { tier: "PLATINUM", count: 0, total: 0 },
