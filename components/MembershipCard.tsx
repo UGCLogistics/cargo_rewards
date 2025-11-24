@@ -365,10 +365,10 @@ export default function MembershipCard() {
 
           {/* overlay text */}
           <div className="absolute left-[8%] bottom-[20%] max-w-[70%] flex flex-col gap-1 text-left text-white">
-            <p className="text-sm md:text-base font-semibold tracking-wide uppercase truncate">
+            <p className="text-sm md:text-base font-semibold tracking-wide uppercase">
               {company}
             </p>
-            <p className="text-xs font-medium opacity-90 truncate">
+            <p className="text-xs font-medium opacity-90">
               {name}
             </p>
             <p className="text-[10px] font-mono opacity-80">
