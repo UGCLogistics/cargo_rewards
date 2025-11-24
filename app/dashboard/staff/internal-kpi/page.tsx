@@ -15,7 +15,6 @@ import {
   PieChart,
   TrendingUp,
   ArrowDownCircle,
-  PiggyBank,
   Award,
   Trophy,
   Crown,
@@ -50,15 +49,35 @@ type TopSalesRow = {
   total_rewards: number;
 };
 
+type CustomerActivityStatus =
+  | "ACTIVE"
+  | "PASSIVE"
+  | "HIGH_RISK_DORMANT"
+  | "DORMANT";
+
+type CustomerActivitySummary = {
+  active: number;
+  passive: number;
+  high_risk_dormant: number;
+  dormant: number;
+};
+
+type CustomerActivityDetailRow = {
+  user_id: string;
+  last_transaction_date: string;
+  days_since_last: number;
+  status: CustomerActivityStatus;
+};
+
 type KpiData = {
   total_transactions: number;
   total_publish_rate: number;
   total_discount: number;
 
-  // Cashback: hanya ACTIVE_CASHBACK_3M (sama dengan KPI eksternal)
+  // Cashback: hanya ACTIVE_CASHBACK_3M
   total_cashback: number;
 
-  // Poin (sinkron dengan eksternal & membership card)
+  // Poin
   total_points?: number;
   total_points_earned?: number;
   total_points_redeemed?: number;
@@ -74,11 +93,9 @@ type KpiData = {
   cashback_base_amount?: number;
   points_base_amount?: number;
 
-  // keaktifan customer
-  active_customers?: number;
-  passive_customers?: number;
-  high_risk_dormant_customers?: number;
-  dormant_customers?: number;
+  // keaktifan customer (dari API)
+  customer_activity_summary?: CustomerActivitySummary;
+  customer_activity_detail?: CustomerActivityDetailRow[];
 };
 
 type CustomerOption = {
@@ -122,7 +139,7 @@ export default function AdminInternalKpiPage() {
       if (membershipLevel) params.set("membership", membershipLevel);
 
       const query = params.toString();
-      const url = `/api/staff/kpi${query ? `?${query}` : ""}`;
+      const url = `/api/admin/kpi${query ? `?${query}` : ""}`;
 
       const res = await fetch(url, {
         headers: {
@@ -227,12 +244,14 @@ export default function AdminInternalKpiPage() {
   const avgPointsPerTxn =
     totalTransactions > 0 ? totalPointsForCost / totalTransactions : 0;
 
-  // keaktifan customer
-  const activeCustomers = kpi?.active_customers ?? 0;
-  const passiveCustomers = kpi?.passive_customers ?? 0;
+  // ====== KEAKTIFAN CUSTOMER (PAKAI summary dari API) ======
+  const activitySummary = kpi?.customer_activity_summary;
+
+  const activeCustomers = activitySummary?.active ?? 0;
+  const passiveCustomers = activitySummary?.passive ?? 0;
   const highRiskDormantCustomers =
-    kpi?.high_risk_dormant_customers ?? 0;
-  const dormantCustomers = kpi?.dormant_customers ?? 0;
+    activitySummary?.high_risk_dormant ?? 0;
+  const dormantCustomers = activitySummary?.dormant ?? 0;
 
   const topCustomers = kpi?.top_customers ?? [];
   const topSales = kpi?.top_sales ?? [];
@@ -242,7 +261,7 @@ export default function AdminInternalKpiPage() {
       {/* Header */}
       <header>
         <h1 className="text-2xl md:text-3xl font-semibold text-white">
-          Dashboard Program
+          Dashboard KPI Internal - Admin
         </h1>
         <p className="mt-1 text-sm text-slate-400 max-w-2xl">
           Ringkasan performa global program C.A.R.G.O Rewards untuk seluruh
@@ -296,7 +315,7 @@ export default function AdminInternalKpiPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-md bg-black/20 border border-white/10 px-2 py-1 text-xs text-white"
+              className="w-full rounded-md bg-black/20 border border.white/10 px-2 py-1 text-xs text-white"
             />
           </div>
 
@@ -384,7 +403,7 @@ export default function AdminInternalKpiPage() {
               </span>
               <Package className="w-8 h-8 text-slate-400" />
             </div>
-            <span className="text-xl font-semibold text-white">
+            <span className="text-xl font-semibold text.white">
               {totalTransactions.toLocaleString("id-ID")}
             </span>
           </div>
@@ -490,7 +509,7 @@ export default function AdminInternalKpiPage() {
 
           {/* 8. Sisa Poin Tersedia */}
           <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
+            <div className="flex.items-center justify-between">
               <span className="text-xs uppercase tracking-wide text-slate-400">
                 Sisa Poin Tersedia
               </span>
@@ -636,7 +655,7 @@ export default function AdminInternalKpiPage() {
 
             {/* Nilai Poin Diberikan */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <div className="flex items-center justify-between">
+              <div className="flex.items-center justify-between">
                 <span className="text-[11px] uppercase tracking-wide text-slate-400">
                   Nilai Poin Diberikan
                 </span>
@@ -655,7 +674,7 @@ export default function AdminInternalKpiPage() {
 
             {/* Nilai Poin Diredeem */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <div className="flex items-center justify-between">
+              <div className="flex.items-center justify-between">
                 <span className="text-[11px] uppercase tracking-wide text-slate-400">
                   Nilai Poin Diredeem
                 </span>
@@ -674,7 +693,7 @@ export default function AdminInternalKpiPage() {
 
             {/* Nilai Sisa Poin */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <div className="flex items-center justify-between">
+              <div className="flex.items-center justify-between">
                 <span className="text-[11px] uppercase tracking-wide text-slate-400">
                   Nilai Sisa Poin Tersedia
                 </span>
@@ -699,7 +718,7 @@ export default function AdminInternalKpiPage() {
             </h3>
             <div className="grid gap-3 sm:grid-cols-3 text-xs">
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-slate-400">
                     Silver
                   </span>
@@ -710,7 +729,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-yellow-500">
                     Gold
                   </span>
@@ -721,7 +740,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-slate-200">
                     Platinum
                   </span>
@@ -741,7 +760,7 @@ export default function AdminInternalKpiPage() {
             </h3>
             <div className="grid gap-3 sm:grid-cols-4 text-xs">
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-emerald-300">
                     Active (&lt; 15 hari)
                   </span>
@@ -752,7 +771,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-sky-300">
                     Passive (15–30 hari)
                   </span>
@@ -762,8 +781,8 @@ export default function AdminInternalKpiPage() {
                   {passiveCustomers.toLocaleString("id-ID")}
                 </span>
               </div>
-              <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+              <div className="glass rounded-xl px-3 py-3 flex flex.col gap-1">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-amber-300">
                     High Risk Dormant (31–45)
                   </span>
@@ -774,7 +793,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex.items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-red-300">
                     Dormant (&gt; 45 hari)
                   </span>
@@ -878,7 +897,7 @@ export default function AdminInternalKpiPage() {
                     {topSales.map((s) => (
                       <tr
                         key={s.sales_name}
-                        className="border-t border-white/10 hover:bg.white/5"
+                        className="border-t border-white/10 hover:bg-white/5"
                       >
                         <td className="px-3 py-2">
                           {s.sales_name || "Tanpa Sales"}
