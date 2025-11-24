@@ -1,4 +1,3 @@
-// app/dashboard/rewards/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -63,6 +62,7 @@ interface CustomerOption {
 type AppRole = "CUSTOMER" | "INTERNAL";
 
 const ROWS_PER_PAGE = 20;
+const ALL_USERS = "ALL_USERS";
 
 export default function RewardsHistoryPage() {
   const { user } = useAuth();
@@ -110,7 +110,12 @@ export default function RewardsHistoryPage() {
       String(rawRole).toUpperCase() === "CUSTOMER" ? "CUSTOMER" : "INTERNAL";
 
     setRole(r);
-    setSelectedUserId((prev) => prev || user.id);
+    setSelectedUserId((prev) => {
+      if (prev) return prev;
+      // Customer → hanya lihat dirinya sendiri
+      // Internal → default "Semua perusahaan"
+      return r === "INTERNAL" ? ALL_USERS : user.id;
+    });
   }, [user]);
 
   // ==== LOAD CUSTOMER LIST UNTUK INTERNAL ====
@@ -119,9 +124,7 @@ export default function RewardsHistoryPage() {
 
     const loadCustomers = async () => {
       try {
-        const res = await fetch("/api/customers-simple", {
-          cache: "no-store",
-        });
+        const res = await fetch("/api/customers-simple", { cache: "no-store" });
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error || "Gagal memuat customer");
         setCustomers(json.customers || []);
@@ -142,7 +145,11 @@ export default function RewardsHistoryPage() {
         setLoading(true);
         setError(null);
 
-        const url = `/api/rewards?userId=${encodeURIComponent(selectedUserId)}`;
+        const isAll = selectedUserId === ALL_USERS;
+        const url = isAll
+          ? "/api/rewards?userId=ALL_USERS"
+          : `/api/rewards?userId=${encodeURIComponent(selectedUserId)}`;
+
         const res = await fetch(url, { cache: "no-store" });
         const json = await res.json();
 
@@ -421,7 +428,10 @@ export default function RewardsHistoryPage() {
 
   const currentCompanyName =
     role === "INTERNAL"
-      ? customers.find((c) => c.user_id === selectedUserId)?.company_name ?? ""
+      ? selectedUserId === ALL_USERS
+        ? "Semua perusahaan"
+        : customers.find((c) => c.user_id === selectedUserId)?.company_name ??
+          ""
       : undefined;
 
   // ==== APPROVER DISPLAY (Nama - Company) ====
@@ -436,8 +446,7 @@ export default function RewardsHistoryPage() {
     const loadApprover = async () => {
       try {
         const res = await fetch(
-          `/api/admin/user-brief?userId=${encodeURIComponent(targetId)}`,
-          { cache: "no-store" }
+          `/api/admin/user-brief?userId=${encodeURIComponent(targetId)}`
         );
         const json = await res.json();
         if (!res.ok || !json.user) return;
@@ -476,7 +485,9 @@ export default function RewardsHistoryPage() {
 
   // ==== DATA PAYMENT UNTUK POPUP ====
   const detailLinkedAdjustment =
-    detailItem && detailItem.linkedAdjustment ? detailItem.linkedAdjustment : null;
+    detailItem && detailItem.linkedAdjustment
+      ? detailItem.linkedAdjustment
+      : null;
 
   // nominal pembayaran
   const paymentAmount =
@@ -534,7 +545,8 @@ export default function RewardsHistoryPage() {
           Riwayat Rewards
         </h1>
         <p className="text-sm text-gray-400">
-          Lihat riwayat perolehan poin, diskon, cashback, dan penukaran rewards.
+          Lihat riwayat perolehan poin, diskon, cashback, dan penukaran
+          rewards.
         </p>
       </header>
 
@@ -594,13 +606,14 @@ export default function RewardsHistoryPage() {
               Perusahaan
             </label>
             <select
-              value={selectedUserId || ""}
-              onChange={(e) =>
-                setSelectedUserId(e.target.value ? e.target.value : null)
-              }
+              value={selectedUserId || ALL_USERS}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedUserId(val === ALL_USERS ? ALL_USERS : val || null);
+              }}
               className="rounded-lg border border-white/20 bg-slate-950/80 px-2 py-1 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#ff4600] focus:border-transparent"
             >
-              <option value="">Pilih perusahaan</option>
+              <option value={ALL_USERS}>Semua perusahaan</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.user_id}>
                   {c.company_name || "(tanpa nama)"} — {c.user_id.slice(0, 8)}
@@ -1015,7 +1028,8 @@ export default function RewardsHistoryPage() {
                 ) : (
                   <p className="text-xs text-gray-400">
                     Tidak ada jurnal ADJUST spesifik yang terdeteksi untuk
-                    penukaran ini. Kemungkinan sistem mencatatnya secara agregat.
+                    penukaran ini. Kemungkinan sistem mencatatnya secara
+                    agregat.
                   </p>
                 )}
               </div>
