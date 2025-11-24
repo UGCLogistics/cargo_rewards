@@ -1,143 +1,105 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
+// app/api/transactions/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 /**
- * Supabase service client (bypass RLS).
- * HANYA dipakai di server.
+ * Supabase service client (pakai SERVICE_ROLE, bypass RLS).
+ * Wajib: SUPABASE_SERVICE_ROLE cuma di-define di server (Vercel env), JANGAN di-expose ke client.
  */
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE;
+
   if (!url || !key) {
     throw new Error("Supabase environment variables are missing");
   }
+
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-/**
- * GET /api/transactions
- *
- * Query params:
- *  - scope=all        → ambil semua transaksi (internal)
- *  - scope=self&userId=<uuid> → hanya transaksi user tersebut (customer)
- *  - startDate=YYYY-MM-DD (opsional)
- *  - endDate=YYYY-MM-DD   (opsional)
- *  - companyName=<string>  (opsional, hanya dipakai untuk scope=all)
- *
- * Output: { data: [ { ..., company_name } ] }
- */
-export async function GET(request: Request) {
+export async function GET(req: NextRequest) {
   try {
     const supabase = getServiceClient();
+    const { searchParams } = new URL(req.url);
 
-    const url = new URL(request.url);
-    const scope = url.searchParams.get("scope") || "self";
-    const userIdParam = url.searchParams.get("userId");
-    const startDate = url.searchParams.get("startDate");
-    const endDate = url.searchParams.get("endDate");
-    const companyName = url.searchParams.get("companyName");
+    const scope = (searchParams.get("scope") ?? "self").toLowerCase();
+    const userId = searchParams.get("userId");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const companyName = searchParams.get("companyName");
 
-    // --- Ambil transaksi dasar ---
+    // base query: AMBIL DATA MENTAH DARI TABEL transactions
+    // pastiin kolomnya sesuai sama schema lu
     let query = supabase
       .from("transactions")
-      .select("*")
-      .order("date", { ascending: false });
+      .select(
+        `
+        id,
+        user_id,
+        date,
+        origin,
+        destination,
+        publish_rate,
+        discount_amount,
+        company_name
+      `
+      );
 
+    // scope=self → cuma transaksi si user
     if (scope === "self") {
-      // Hanya transaksi milik user tertentu (untuk customer)
-      if (!userIdParam) {
+      if (!userId) {
         return NextResponse.json(
-          { error: "userId required for scope=self" },
+          { error: "userId is required when scope=self" },
           { status: 400 }
         );
       }
-      query = query.eq("user_id", userIdParam);
-    } else if (scope === "all" && companyName) {
-      // Internal + filter perusahaan: batasi user_id yang company_name-nya cocok
-      const { data: companyCustomers, error: companyErr } = await supabase
-        .from("customers")
-        .select("user_id")
-        .eq("company_name", companyName);
-
-      if (companyErr) {
-        console.error(
-          "Failed to fetch customers for company filter:",
-          companyErr.message
-        );
-        return NextResponse.json(
-          { error: companyErr.message },
-          { status: 500 }
-        );
-      }
-
-      const filterUserIds = (companyCustomers ?? [])
-        .map((c: any) => c.user_id as string)
-        .filter((v) => !!v);
-
-      // Kalau tidak ada customer untuk perusahaan tsb → langsung return kosong
-      if (filterUserIds.length === 0) {
-        return NextResponse.json({ data: [] }, { status: 200 });
-      }
-
-      query = query.in("user_id", filterUserIds);
+      query = query.eq("user_id", userId);
     }
-    // scope=all tanpa companyName → ambil semua user
 
-    if (startDate) query = query.gte("date", startDate);
-    if (endDate) query = query.lte("date", endDate);
+    // filter tanggal (inclusive)
+    if (startDate) {
+      query = query.gte("date", startDate);
+    }
+    if (endDate) {
+      query = query.lte("date", endDate);
+    }
 
-    const { data: trxRows, error } = await query;
+    // filter perusahaan (hanya internal, scope=all)
+    if (
+      scope === "all" &&
+      companyName &&
+      companyName !== "ALL"
+    ) {
+      query = query.eq("company_name", companyName);
+    }
+
+    // order by terbaru dulu
+    query = query
+      .order("date", { ascending: false })
+      .order("id", { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[/api/transactions] Supabase error:", error);
+      return NextResponse.json(
+        { error: "Gagal memuat transaksi" },
+        { status: 500 }
+      );
     }
 
-    if (!trxRows || trxRows.length === 0) {
-      return NextResponse.json({ data: [] }, { status: 200 });
-    }
-
-    // --- Join ke public.customers untuk dapat company_name ---
-    const userIds = Array.from(
-      new Set(
-        (trxRows as any[])
-          .map((row) => row.user_id)
-          .filter((v) => v !== null && v !== undefined)
-      )
-    );
-
-    let companyMap = new Map<string, string | null>();
-
-    if (userIds.length > 0) {
-      const { data: custRows, error: custError } = await supabase
-        .from("customers")
-        .select("user_id, company_name")
-        .in("user_id", userIds);
-
-      if (custError) {
-        console.error("Failed to fetch customers:", custError.message);
-      } else if (custRows) {
-        companyMap = new Map(
-          (custRows as any[]).map((c) => [
-            c.user_id as string,
-            c.company_name as string,
-          ])
-        );
-      }
-    }
-
-    const merged = (trxRows as any[]).map((row) => ({
-      ...row,
-      company_name: companyMap.get(row.user_id) ?? null,
-    }));
-
-    return NextResponse.json({ data: merged }, { status: 200 });
-  } catch (err: any) {
-    console.error("GET /api/transactions error:", err);
+    // selalu balikin array
+    return NextResponse.json({
+      data: data ?? [],
+    });
+  } catch (err) {
+    console.error("[/api/transactions] Unexpected error:", err);
     return NextResponse.json(
-      { error: err?.message || "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
