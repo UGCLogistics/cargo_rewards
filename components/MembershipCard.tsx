@@ -6,9 +6,9 @@ import html2canvas from "html2canvas";
 import { useAuth } from "../context/AuthContext";
 import supabase from "../lib/supabaseClient";
 
-import silverCardBg from "./silver_membercard.png";
-import goldCardBg from "./gold_membercard.png";
-import platinumCardBg from "./platinum_membercard.png";
+import silverCardBg from "./silver.png";
+import goldCardBg from "./gold.png";
+import platinumCardBg from "./platinum.png";
 import ugcLogo from "./logougcorangewhite.png";
 
 type Profile = {
