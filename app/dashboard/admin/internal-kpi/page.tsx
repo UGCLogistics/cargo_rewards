@@ -509,7 +509,7 @@ export default function AdminInternalKpiPage() {
 
           {/* 8. Sisa Poin Tersedia */}
           <div className="glass rounded-2xl px-4 py-3 flex flex-col gap-1">
-            <div className="flex.items-center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wide text-slate-400">
                 Sisa Poin Tersedia
               </span>
@@ -655,7 +655,7 @@ export default function AdminInternalKpiPage() {
 
             {/* Nilai Poin Diberikan */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <div className="flex.items-center justify-between">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase tracking-wide text-slate-400">
                   Nilai Poin Diberikan
                 </span>
@@ -674,7 +674,7 @@ export default function AdminInternalKpiPage() {
 
             {/* Nilai Poin Diredeem */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <div className="flex.items-center justify-between">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase tracking-wide text-slate-400">
                   Nilai Poin Diredeem
                 </span>
@@ -693,7 +693,7 @@ export default function AdminInternalKpiPage() {
 
             {/* Nilai Sisa Poin */}
             <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-              <div className="flex.items-center justify-between">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase tracking-wide text-slate-400">
                   Nilai Sisa Poin Tersedia
                 </span>
@@ -718,7 +718,7 @@ export default function AdminInternalKpiPage() {
             </h3>
             <div className="grid gap-3 sm:grid-cols-3 text-xs">
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-slate-400">
                     Silver
                   </span>
@@ -729,7 +729,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-yellow-500">
                     Gold
                   </span>
@@ -740,7 +740,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-slate-200">
                     Platinum
                   </span>
@@ -760,7 +760,7 @@ export default function AdminInternalKpiPage() {
             </h3>
             <div className="grid gap-3 sm:grid-cols-4 text-xs">
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-emerald-300">
                     Active (&lt; 15 hari)
                   </span>
@@ -771,7 +771,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-sky-300">
                     Passive (15–30 hari)
                   </span>
@@ -782,7 +782,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex.col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-amber-300">
                     High Risk Dormant (31–45)
                   </span>
@@ -793,7 +793,7 @@ export default function AdminInternalKpiPage() {
                 </span>
               </div>
               <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
-                <div className="flex.items-center justify-between">
+                <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-red-300">
                     Dormant (&gt; 45 hari)
                   </span>
