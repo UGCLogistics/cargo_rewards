@@ -4,14 +4,23 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+// pastikan route ini tidak pernah di-cache di layer Next/Vercel
+export const fetchCache = "default-no-store";
 
 /** Supabase service-role client (bypass RLS untuk agregat admin) */
 function getServiceClient(): SupabaseClient {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE;
+  const url =
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
+
   if (!url || !key) {
-    throw new Error("Supabase environment variables are missing");
+    throw new Error(
+      "Supabase environment variables are missing (SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SERVICE_ROLE)"
+    );
   }
+
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
@@ -187,7 +196,11 @@ export async function GET(request: Request) {
     // 4) Ambil info customer (company_name, salesname, company_code)
     const customerMap = new Map<
       string,
-      { company_name: string | null; salesname: string | null; company_code: string | null }
+      {
+        company_name: string | null;
+        salesname: string | null;
+        company_code: string | null;
+      }
     >();
 
     if (userIds.length > 0) {
@@ -232,59 +245,57 @@ export async function GET(request: Request) {
     // 6) Hitung status aktivitas (pakai endDate kalau ada, kalau tidak pakai hari ini)
     const endDateObj = effectiveEnd ? new Date(effectiveEnd) : new Date();
 
-    const result = Array.from(totalsMap.entries()).map(
-      ([user_id, agg]) => {
-        // Tier utama diambil dari membership_periods (tierMap),
-        // kalau tidak ada → fallback ke perhitungan dari total spending
-        const tierFromMp = tierMap.get(user_id);
-        const tier: "SILVER" | "GOLD" | "PLATINUM" =
-          tierFromMp ?? getTierFromSpending(agg.total);
+    const result = Array.from(totalsMap.entries()).map(([user_id, agg]) => {
+      // Tier utama diambil dari membership_periods (tierMap),
+      // kalau tidak ada → fallback ke perhitungan dari total spending
+      const tierFromMp = tierMap.get(user_id);
+      const tier: "SILVER" | "GOLD" | "PLATINUM" =
+        tierFromMp ?? getTierFromSpending(agg.total);
 
-        let nextThreshold: number | null = null;
-        if (tier === "SILVER") nextThreshold = 50_000_000;
-        else if (tier === "GOLD") nextThreshold = 150_000_000;
+      let nextThreshold: number | null = null;
+      if (tier === "SILVER") nextThreshold = 50_000_000;
+      else if (tier === "GOLD") nextThreshold = 150_000_000;
 
-        const amountToNext =
-          nextThreshold !== null ? Math.max(0, nextThreshold - agg.total) : 0;
+      const amountToNext =
+        nextThreshold !== null ? Math.max(0, nextThreshold - agg.total) : 0;
 
-        // Status aktivitas berdasarkan jeda hari dari transaksi terakhir
-        let activity_status: "ACTIVE" | "PASSIVE" | "RISK" | "DORMANT" =
-          "DORMANT";
-        if (agg.lastDate) {
-          const last = new Date(agg.lastDate);
-          const diffMs = endDateObj.getTime() - last.getTime();
-          const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      // Status aktivitas berdasarkan jeda hari dari transaksi terakhir
+      let activity_status: "ACTIVE" | "PASSIVE" | "RISK" | "DORMANT" =
+        "DORMANT";
+      if (agg.lastDate) {
+        const last = new Date(agg.lastDate);
+        const diffMs = endDateObj.getTime() - last.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-          if (diffDays < 15) activity_status = "ACTIVE";
-          else if (diffDays <= 30) activity_status = "PASSIVE";
-          else if (diffDays <= 45) activity_status = "RISK";
-          else activity_status = "DORMANT";
-        }
-
-        const cust = customerMap.get(user_id) ?? {
-          company_name: null,
-          salesname: null,
-          company_code: null,
-        };
-        const usr = userMap.get(user_id) ?? {
-          user_code: null,
-        };
-
-        return {
-          user_id,
-          user_code: usr.user_code,
-          company_code: cust.company_code,
-          company_name: cust.company_name,
-          salesname: cust.salesname,
-          total_spending: agg.total,
-          total_shipments: agg.count,
-          last_transaction_date: agg.lastDate,
-          tier,
-          amount_to_next_tier: amountToNext,
-          activity_status,
-        };
+        if (diffDays < 15) activity_status = "ACTIVE";
+        else if (diffDays <= 30) activity_status = "PASSIVE";
+        else if (diffDays <= 45) activity_status = "RISK";
+        else activity_status = "DORMANT";
       }
-    );
+
+      const cust = customerMap.get(user_id) ?? {
+        company_name: null,
+        salesname: null,
+        company_code: null,
+      };
+      const usr = userMap.get(user_id) ?? {
+        user_code: null,
+      };
+
+      return {
+        user_id,
+        user_code: usr.user_code,
+        company_code: cust.company_code,
+        company_name: cust.company_name,
+        salesname: cust.salesname,
+        total_spending: agg.total,
+        total_shipments: agg.count,
+        last_transaction_date: agg.lastDate,
+        tier,
+        amount_to_next_tier: amountToNext,
+        activity_status,
+      };
+    });
 
     return NextResponse.json(
       {
