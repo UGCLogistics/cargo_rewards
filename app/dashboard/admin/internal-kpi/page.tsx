@@ -260,12 +260,11 @@ export default function AdminInternalKpiPage() {
     <div className="space-y-6">
       {/* Header */}
       <header>
-        <h1 className="text-2xl md:text-3xl font-semibold text-white">
-          Dashboard KPI Internal - Admin
+        <h1 className="text-2xl md:text-3xl font-semibold text-[#FF4600]">
+          PROGRAM OVERVIEW DASHBOARD
         </h1>
         <p className="mt-1 text-sm text-slate-400 max-w-2xl">
-          Ringkasan performa global program C.A.R.G.O Rewards untuk seluruh
-          pelanggan dan transaksi. Data ini dapat dijadikan dasar review bisnis
+          Ringkasan performa program C.A.R.G.O Rewards. Data ini dapat dijadikan dasar review bisnis
           dan penentuan strategi.
         </p>
       </header>
@@ -278,7 +277,7 @@ export default function AdminInternalKpiPage() {
       )}
 
       {loading && !error && (
-        <p className="text-sm text-slate-400">Memuat data KPI…</p>
+        <p className="text-sm text-slate-400">generating report…</p>
       )}
 
       {/* Filter Bar */}
