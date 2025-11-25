@@ -15,23 +15,82 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      {/* body full screen, frame nggak goyang, yang scroll cuma area tengah */}
       <body className="h-screen overflow-hidden antialiased">
         <AuthProvider>
-          {/* GLOBAL ORANGE–RED ABSTRACT BACKGROUND (semua page) */}
+          {/* GLOBAL ORANGE–RED ABSTRACT BACKGROUND (cover semua page) */}
           <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-            {/* besar, blur berat kiri atas */}
-            <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-gradient-to-br from-[#ffb347] via-[#ff7a1a] to-[#ff4600] blur-3xl opacity-75" />
-            {/* medium, blur sedang kanan atas */}
-            <div className="absolute -top-20 right-0 h-72 w-72 rounded-[40%] bg-gradient-to-br from-[#ff7a1a] via-[#ff5c1a] to-[#ff2600] blur-2xl opacity-70" />
-            {/* kecil, lebih tajam di tengah */}
-            <div className="absolute top-1/3 left-16 h-32 w-32 rounded-full bg-gradient-to-br from-[#ff7a1a] to-[#ff3b00] blur-md opacity-75" />
-            {/* besar, blur bawah kiri */}
-            <div className="absolute bottom-[-120px] -left-40 h-[340px] w-[340px] rounded-[45%] bg-gradient-to-tr from-[#ff9a3b] via-[#ff6b1a] to-[#ff2600] blur-3xl opacity-70" />
-            {/* besar, blur bawah tengah */}
-            <div className="absolute bottom-[-180px] left-1/3 h-[420px] w-[420px] rounded-full bg-gradient-to-tr from-[#ff7a1a] via-[#ff4600] to-[#ff1600] blur-3xl opacity-80" />
-            {/* kecil, soft kanan bawah */}
-            <div className="absolute bottom-10 right-6 h-40 w-40 rounded-[45%] bg-gradient-to-br from-[#ffb347] via-[#ff7a1a] to-[#ff4600] blur-xl opacity-65" />
+            {/* blob besar kiri atas */}
+            <div
+              className="absolute -top-40 -left-40 h-[420px] w-[420px] rounded-[40%] blur-3xl opacity-80"
+              style={{
+                background:
+                  "radial-gradient(circle at 30% 20%, #FFEDD5, #FF9240, #FF4B1F)",
+              }}
+            />
+            {/* blob medium kanan atas */}
+            <div
+              className="absolute -top-24 right-[-80px] h-[320px] w-[320px] rounded-[45%] blur-2xl opacity-80"
+              style={{
+                background:
+                  "radial-gradient(circle at 10% 0, #FFC48A, #FF8033, #FF3210)",
+              }}
+            />
+            {/* blob kecil agak tajam kiri tengah */}
+            <div
+              className="absolute top-1/3 -left-10 h-[200px] w-[200px] rounded-full blur-xl opacity-75"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 0, #FFB27B, #FF6A2D, #FF2A0A)",
+              }}
+            />
+            {/* blob kecil kanan tengah */}
+            <div
+              className="absolute top-1/3 right-4 h-[160px] w-[160px] rounded-[38%] blur-xl opacity-70"
+              style={{
+                background:
+                  "radial-gradient(circle at 40% 0, #FFD1A3, #FF8A3D, #FF3B0F)",
+              }}
+            />
+            {/* blob besar bawah kiri */}
+            <div
+              className="absolute bottom-[-160px] -left-52 h-[380px] w-[380px] rounded-[45%] blur-3xl opacity-80"
+              style={{
+                background:
+                  "radial-gradient(circle at 20% 100%, #FFB27B, #FF6A2D, #FF2600)",
+              }}
+            />
+            {/* blob besar bawah tengah */}
+            <div
+              className="absolute bottom-[-200px] left-1/3 h-[420px] w-[420px] rounded-full blur-3xl opacity-85"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 100%, #FFC996, #FF7A2F, #FF2600)",
+              }}
+            />
+            {/* blob besar bawah kanan */}
+            <div
+              className="absolute bottom-[-180px] right-[-120px] h-[360px] w-[360px] rounded-[45%] blur-3xl opacity-80"
+              style={{
+                background:
+                  "radial-gradient(circle at 70% 100%, #FFCF9E, #FF7A33, #FF2A0A)",
+              }}
+            />
+            {/* blob kecil bawah kiri atas */}
+            <div
+              className="absolute bottom-24 left-10 h-[120px] w-[120px] rounded-full blur-lg opacity-80"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 50%, #FFB885, #FF6F2F, #FF2A0A)",
+              }}
+            />
+            {/* blob kecil atas tengah */}
+            <div
+              className="absolute top-16 left-1/2 h-[140px] w-[140px] -translate-x-1/2 rounded-full blur-xl opacity-80"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 0, #FFD8AA, #FF9240, #FF3B0F)",
+              }}
+            />
           </div>
 
           <div className="flex h-full flex-col">
