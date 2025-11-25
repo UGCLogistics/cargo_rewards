@@ -200,60 +200,70 @@ export default function HomePage() {
         {/* background & warna sudah di-handle global CSS */}
         <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-6xl space-y-16 px-4 py-10">
-            {/* HERO */}
-            <section className="space-y-6 text-center">
-              <p
-                className="text-xs uppercase tracking-[0.25em]"
-                style={{ color: "rgba(247,248,250,0.6)" }}
-              >
-                UGC LOGISTICS • C.A.R.G.O REWARDS
-              </p>
-              <h1 className="text-3xl font-extrabold leading-tight md:text-5xl">
-                Bukan Sekadar Logistik,{" "}
-                <br className="hidden md:block" />
-                Ini{" "}
-                <span style={{ color: "var(--accent)" }}>
-                  Kemitraan Cerdas
-                </span>{" "}
-                untuk Bisnis Anda.
-              </h1>
-              <p
-                className="mx-auto max-w-2xl text-sm md:text-base"
-                style={{ color: "rgba(247,248,250,0.8)" }}
-              >
-                C.A.R.G.O Rewards memberikan kombinasi diskon langsung,
-                cashback berbasis volume dan poin loyalitas tanpa batas
-                sehingga biaya logistik Anda semakin efisien dan terukur.
-              </p>
+            {/* HERO – kartu kaca dengan blok gradient di belakang */}
+            <section className="flex items-center justify-center">
+              <div className="relative w-full max-w-5xl py-10">
+                {/* blok gradient di kiri belakang kartu */}
+                <div className="pointer-events-none absolute -left-4 top-1/2 h-56 w-56 -translate-y-1/2 rounded-3xl bg-gradient-to-tr from-orange-500 via-orange-400 to-pink-500 blur-md opacity-95" />
 
-              <div className="flex flex-wrap justify-center gap-3">
-                {user ? (
-                  <Link href="/dashboard">
-                    <button className="text-sm font-semibold">
-                      Buka Dashboard Anda
-                    </button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/register">
-                      <button className="text-sm font-semibold">
-                        Daftar Sekarang
-                      </button>
-                    </Link>
-                    <Link href="/login">
-                      <button
-                        className="text-sm font-semibold"
-                        style={{
-                          backgroundColor: "transparent",
-                          color: "var(--accent)",
-                          border: "1px solid var(--accent)",
-                        }}
-                      >
-                        Masuk
-                      </button>
-                    </Link>
-                  </>
-                )}
+                {/* kartu kaca utama */}
+                <div className="glass-card relative mx-auto max-w-3xl px-8 py-10">
+                  <p
+                    className="mb-4 text-xs uppercase tracking-[0.25em] text-center md:text-left"
+                    style={{ color: "rgba(247,248,250,0.6)" }}
+                  >
+                    UGC LOGISTICS • C.A.R.G.O REWARDS
+                  </p>
+
+                  <h1 className="mb-4 text-3xl font-extrabold leading-tight md:text-5xl">
+                    Bukan Sekadar Logistik,{" "}
+                    <br className="hidden md:block" />
+                    Ini{" "}
+                    <span style={{ color: "var(--accent)" }}>
+                      Kemitraan Cerdas
+                    </span>{" "}
+                    untuk Bisnis Anda.
+                  </h1>
+
+                  <p
+                    className="mb-8 max-w-2xl text-sm md:text-base"
+                    style={{ color: "rgba(247,248,250,0.8)" }}
+                  >
+                    C.A.R.G.O Rewards memberikan kombinasi diskon langsung,
+                    cashback berbasis volume dan poin loyalitas tanpa batas
+                    sehingga biaya logistik Anda semakin efisien dan terukur.
+                  </p>
+
+                  <div className="flex flex-wrap gap-3 md:justify-start justify-center">
+                    {user ? (
+                      <Link href="/dashboard">
+                        <button className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase">
+                          Buka Dashboard Anda
+                        </button>
+                      </Link>
+                    ) : (
+                      <>
+                        <Link href="/register">
+                          <button className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase">
+                            Daftar Sekarang
+                          </button>
+                        </Link>
+                        <Link href="/login">
+                          <button
+                            className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase"
+                            style={{
+                              backgroundColor: "transparent",
+                              color: "var(--accent)",
+                              border: "1px solid var(--accent)",
+                            }}
+                          >
+                            Masuk
+                          </button>
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </section>
 
