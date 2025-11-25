@@ -290,7 +290,7 @@ export default function HomePage() {
                     membantu menekan <strong>biaya pengiriman</strong>.
                   </p>
 
-                  <div className="flex flex-wrap gap-3 md:justify-start justify-center">
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
                     {user ? (
                       <>
                         <Link href="/dashboard">
