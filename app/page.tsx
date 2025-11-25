@@ -6,6 +6,19 @@ import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
 import RewardsFooter from "../components/RewardsFooter";
 
+import type { LucideIcon } from "lucide-react";
+import {
+  PiggyBank,
+  TrendingUp,
+  Sparkles,
+  Building2,
+  Rocket,
+  Repeat,
+  Gift,
+  Clock,
+  BarChart3,
+} from "lucide-react";
+
 type InitialRewardsResult = {
   helloDiscount: number;
   helloTier: string;
@@ -24,6 +37,22 @@ type PointsResult = {
   multipliedPoints: number;
   totalPoints: number;
   rewardValue: number;
+};
+
+type FeatureCard = {
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+  iconPosition: string;
+};
+
+type StepCard = {
+  label: string;
+  title: string;
+  desc: string;
+  points: string[];
+  icon: LucideIcon;
+  iconPosition: string;
 };
 
 export default function HomePage() {
@@ -179,6 +208,70 @@ export default function HomePage() {
     setActivePhase((current) => (current === phase ? null : phase));
   }
 
+  const featureCards: FeatureCard[] = [
+    {
+      title: "Hemat Biaya Pengiriman",
+      desc: "Optimalkan biaya kirim cargo domestik dengan kombinasi harga kompetitif, diskon, dan cashback yang terukur.",
+      icon: PiggyBank,
+      iconPosition: "top-3 right-3",
+    },
+    {
+      title: "Cashback & Loyalty Points",
+      desc: "Setiap transaksi menghasilkan poin loyalty dan cashback yang bisa di-reinvest untuk pengiriman berikutnya.",
+      icon: Gift,
+      iconPosition: "top-3 left-3",
+    },
+    {
+      title: "Partner Logistik Jangka Panjang",
+      desc: "Bukan sekadar vendor, tapi partner yang siap support ekspansi dan kebutuhan pengiriman harian Anda.",
+      icon: Handshake as unknown as LucideIcon, // fallback if Handshake tidak tersedia
+      iconPosition: "bottom-3 right-3",
+    } as FeatureCard, // casting untuk Handshake
+    {
+      title: "Siap Scale Up Nasional",
+      desc: "Cocok untuk bisnis dengan cabang, warehouse, atau distribusi multi-kota di seluruh Indonesia.",
+      icon: Building2,
+      iconPosition: "bottom-3 left-3",
+    },
+  ];
+
+  // NOTE: jika icon Handshake tidak ada di versi lucide Anda, ganti manual
+  // dengan salah satu icon lain (mis. Sparkles, Rocket, BarChart3).
+
+  const stepCards: StepCard[] = [
+    {
+      label: "Langkah 1",
+      title: "Registrasi & Hello Discount",
+      desc: "Begitu onboard, pengiriman pertama Anda langsung dapat Hello Discount:",
+      points: [
+        "5% untuk Rp 1 - 4,99 juta",
+        "10% untuk Rp 5 - 14,99 juta",
+        "15% untuk ≥ Rp 15 juta",
+      ],
+      icon: Sparkles,
+      iconPosition: "top-3 right-3",
+    },
+    {
+      label: "Langkah 2",
+      title: "Aktivasi Volume & Active Cashback",
+      desc: "Akumulasi pengiriman 3 bulan pertama dikonversi menjadi cashback:",
+      points: [
+        "5% untuk total Rp 20 - 49,99 juta",
+        "7,5% untuk total ≥ Rp 50 juta",
+      ],
+      icon: Repeat,
+      iconPosition: "top-3 left-3",
+    },
+    {
+      label: "Langkah 3",
+      title: "Retensi & Unlimited Points",
+      desc: "Setiap Rp 10.000 pengiriman = 1 poin. 1 poin = Rp 250. Level Silver / Gold / Platinum mengalikan poin & bonus Anda.",
+      points: [],
+      icon: TrendingUp,
+      iconPosition: "bottom-3 right-3",
+    },
+  ];
+
   return (
     <>
       <SEO
@@ -200,21 +293,19 @@ export default function HomePage() {
 
       {/* Frame khusus landing: konten + footer */}
       <div className="flex h-full flex-col">
-        {/* background & warna sudah di-handle global CSS */}
         <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-6xl space-y-16 px-4 py-10">
-            {/* HERO – glass card + blob warna di belakang */}
+            {/* HERO – glass card, background blob global dari layout */}
             <section className="flex items-center justify-center">
               <div className="relative w-full max-w-5xl py-10">
-                {/* Blob kiri */}
-                <div className="pointer-events-none absolute -left-4 top-1/2 h-56 w-56 -translate-y-1/2 rounded-3xl bg-gradient-to-tr from-orange-500 via-orange-400 to-pink-500 opacity-95" />
-                {/* Blob kanan atas */}
-                <div className="pointer-events-none absolute right-0 -top-6 h-40 w-40 rounded-full bg-gradient-to-tr from-purple-500 via-fuchsia-500 to-sky-400 opacity-80" />
-                {/* Blob kanan bawah */}
-                <div className="pointer-events-none absolute right-12 -bottom-10 h-44 w-44 rounded-[999px] bg-gradient-to-tr from-amber-300 via-orange-400 to-rose-500 opacity-70" />
-
-                {/* kartu kaca utama */}
                 <div className="glass-card relative mx-auto max-w-3xl px-8 py-10">
+                  {/* icon kecil di hero, pojok kanan atas */}
+                  <div className="absolute right-6 top-6 z-[1]">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                      <Rocket className="h-4 w-4 text-[#ffdbb0]" />
+                    </div>
+                  </div>
+
                   <p
                     className="mb-4 text-xs uppercase tracking-[0.25em] text-center md:text-left"
                     style={{ color: "rgba(247,248,250,0.6)" }}
@@ -295,8 +386,15 @@ export default function HomePage() {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
+                {/* card kiri besar */}
                 <div className="glass space-y-4 p-6 md:p-7">
-                  <h3 className="text-lg font-semibold md:text-xl">
+                  {/* icon di kiri atas */}
+                  <div className="absolute left-5 top-5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                      <BarChart3 className="h-4 w-4 text-[#ffdbb0]" />
+                    </div>
+                  </div>
+                  <h3 className="pt-5 text-lg font-semibold md:text-xl">
                     Kenapa CARGO Rewards Relevan untuk Bisnis Anda?
                   </h3>
                   <p
@@ -322,40 +420,37 @@ export default function HomePage() {
                   </p>
                 </div>
 
+                {/* 4 card kecil dengan icon variatif */}
                 <div className="grid grid-cols-2 gap-4">
-                  {[
-                    {
-                      title: "Hemat Biaya Pengiriman",
-                      desc: "Optimalkan biaya kirim cargo domestik dengan kombinasi harga kompetitif, diskon, dan cashback yang terukur.",
-                    },
-                    {
-                      title: "Cashback & Loyalty Points",
-                      desc: "Setiap transaksi menghasilkan poin loyalty dan cashback yang bisa di-reinvest ke pengiriman berikutnya.",
-                    },
-                    {
-                      title: "Partner Logistik Jangka Panjang",
-                      desc: "Bukan sekadar vendor, tapi partner yang siap support ekspansi dan kebutuhan pengiriman bisnis Anda.",
-                    },
-                    {
-                      title: "Siap Scale Up Nasional",
-                      desc: "Cocok untuk bisnis dengan cabang, warehouse, atau distribusi multi-kota di Indonesia.",
-                    },
-                  ].map((item) => (
-                    <div key={item.title} className="glass space-y-1 p-4">
-                      <h4
-                        className="text-sm font-semibold"
-                        style={{ color: "var(--accent)" }}
+                  {featureCards.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div
+                        key={item.title}
+                        className="glass space-y-1 p-4 pt-6"
                       >
-                        {item.title}
-                      </h4>
-                      <p
-                        className="text-xs"
-                        style={{ color: "rgba(247,248,250,0.8)" }}
-                      >
-                        {item.desc}
-                      </p>
-                    </div>
-                  ))}
+                        <div
+                          className={`absolute ${item.iconPosition} z-[1]`}
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                            <Icon className="h-4 w-4 text-[#ffebd1]" />
+                          </div>
+                        </div>
+                        <h4
+                          className="text-sm font-semibold pr-8"
+                          style={{ color: "var(--accent)" }}
+                        >
+                          {item.title}
+                        </h4>
+                        <p
+                          className="text-xs"
+                          style={{ color: "rgba(247,248,250,0.8)" }}
+                        >
+                          {item.desc}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </section>
@@ -377,90 +472,51 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 3 langkah ringkas */}
+              {/* 3 langkah ringkas, tiap card ada icon beda posisi */}
               <div className="grid gap-6 md:grid-cols-3">
-                <div className="glass space-y-2 p-5">
-                  <p
-                    className="text-[11px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(247,248,250,0.6)" }}
-                  >
-                    Langkah 1
-                  </p>
-                  <h3
-                    className="text-sm font-semibold"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Registrasi &amp; Hello Discount
-                  </h3>
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(247,248,250,0.9)" }}
-                  >
-                    Begitu onboard, pengiriman pertama Anda langsung dapat
-                    <strong> Hello Discount</strong>:
-                  </p>
-                  <ul
-                    className="space-y-1 text-xs"
-                    style={{ color: "rgba(247,248,250,0.8)" }}
-                  >
-                    <li>• 5% untuk Rp 1 - 4,99 juta</li>
-                    <li>• 10% untuk Rp 5 - 14,99 juta</li>
-                    <li>• 15% untuk ≥ Rp 15 juta</li>
-                  </ul>
-                </div>
+                {stepCards.map((step) => {
+                  const Icon = step.icon;
+                  return (
+                    <div key={step.label} className="glass space-y-2 p-5 pt-7">
+                      <div
+                        className={`absolute ${step.iconPosition} z-[1]`}
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                          <Icon className="h-4 w-4 text-[#ffecd5]" />
+                        </div>
+                      </div>
 
-                <div className="glass space-y-2 p-5">
-                  <p
-                    className="text-[11px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(247,248,250,0.6)" }}
-                  >
-                    Langkah 2
-                  </p>
-                  <h3
-                    className="text-sm font-semibold"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Aktivasi Volume &amp; Active Cashback
-                  </h3>
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(247,248,250,0.9)" }}
-                  >
-                    Akumulasi pengiriman 3 bulan pertama dikonversi menjadi
-                    cashback:
-                  </p>
-                  <ul
-                    className="space-y-1 text-xs"
-                    style={{ color: "rgba(247,248,250,0.8)" }}
-                  >
-                    <li>• 5% untuk total Rp 20 - 49,99 juta</li>
-                    <li>• 7,5% untuk total ≥ Rp 50 juta</li>
-                  </ul>
-                </div>
-
-                <div className="glass space-y-2 p-5">
-                  <p
-                    className="text-[11px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(247,248,250,0.6)" }}
-                  >
-                    Langkah 3
-                  </p>
-                  <h3
-                    className="text-sm font-semibold"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Retensi &amp; Unlimited Points
-                  </h3>
-                  <p
-                    className="text-xs"
-                    style={{ color: "rgba(247,248,250,0.9)" }}
-                  >
-                    Setiap <strong>Rp 10.000</strong> pengiriman ={" "}
-                    <strong>1 poin</strong>. 1 poin = <strong>Rp 250</strong>.
-                    Level Silver / Gold / Platinum akan{" "}
-                    <strong>mengalikan poin &amp; bonus</strong> Anda.
-                  </p>
-                </div>
+                      <p
+                        className="text-[11px] uppercase tracking-[0.2em]"
+                        style={{ color: "rgba(247,248,250,0.6)" }}
+                      >
+                        {step.label}
+                      </p>
+                      <h3
+                        className="text-sm font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        {step.title}
+                      </h3>
+                      <p
+                        className="text-xs"
+                        style={{ color: "rgba(247,248,250,0.9)" }}
+                      >
+                        {step.desc}
+                      </p>
+                      {step.points.length > 0 && (
+                        <ul
+                          className="space-y-1 text-xs"
+                          style={{ color: "rgba(247,248,250,0.8)" }}
+                        >
+                          {step.points.map((pt) => (
+                            <li key={pt}>• {pt}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Kalkulator Hello Discount + Active Cashback */}
@@ -769,6 +825,7 @@ export default function HomePage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
+                {/* Tiap fase ada icon di kiri judul */}
                 <button
                   type="button"
                   onClick={() => togglePhase(1)}
@@ -778,18 +835,25 @@ export default function HomePage() {
                       activePhase === 1 ? "var(--accent)" : "var(--border)",
                   }}
                 >
-                  <p
-                    className="text-[11px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(247,248,250,0.6)" }}
-                  >
-                    Fase 1
-                  </p>
-                  <p
-                    className="font-semibold"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Persiapan &amp; Onboarding
-                  </p>
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                      <Clock className="h-3.5 w-3.5 text-[#ffecd5]" />
+                    </div>
+                    <div>
+                      <p
+                        className="text-[11px] uppercase tracking-[0.2em]"
+                        style={{ color: "rgba(247,248,250,0.6)" }}
+                      >
+                        Fase 1
+                      </p>
+                      <p
+                        className="font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        Persiapan &amp; Onboarding
+                      </p>
+                    </div>
+                  </div>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(247,248,250,0.8)" }}
@@ -809,18 +873,25 @@ export default function HomePage() {
                       activePhase === 2 ? "var(--accent)" : "var(--border)",
                   }}
                 >
-                  <p
-                    className="text-[11px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(247,248,250,0.6)" }}
-                  >
-                    Fase 2
-                  </p>
-                  <p
-                    className="font-semibold"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Aktivasi &amp; Monitoring
-                  </p>
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                      <BarChart3 className="h-3.5 w-3.5 text-[#ffecd5]" />
+                    </div>
+                    <div>
+                      <p
+                        className="text-[11px] uppercase tracking-[0.2em]"
+                        style={{ color: "rgba(247,248,250,0.6)" }}
+                      >
+                        Fase 2
+                      </p>
+                      <p
+                        className="font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        Aktivasi &amp; Monitoring
+                      </p>
+                    </div>
+                  </div>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(247,248,250,0.8)" }}
@@ -839,18 +910,25 @@ export default function HomePage() {
                       activePhase === 3 ? "var(--accent)" : "var(--border)",
                   }}
                 >
-                  <p
-                    className="text-[11px] uppercase tracking-[0.2em]"
-                    style={{ color: "rgba(247,248,250,0.6)" }}
-                  >
-                    Fase 3
-                  </p>
-                  <p
-                    className="font-semibold"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    Pertumbuhan &amp; Scale Up
-                  </p>
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                      <TrendingUp className="h-3.5 w-3.5 text-[#ffecd5]" />
+                    </div>
+                    <div>
+                      <p
+                        className="text-[11px] uppercase tracking-[0.2em]"
+                        style={{ color: "rgba(247,248,250,0.6)" }}
+                      >
+                        Fase 3
+                      </p>
+                      <p
+                        className="font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        Pertumbuhan &amp; Scale Up
+                      </p>
+                    </div>
+                  </div>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(247,248,250,0.8)" }}
