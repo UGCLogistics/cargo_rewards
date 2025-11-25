@@ -4,18 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
-import RewardsFooter from "../components/RewardsFooter";
 
 import type { LucideIcon } from "lucide-react";
 import {
   PiggyBank,
-  TrendingUp,
-  Sparkles,
+  Gift,
   Building2,
   Rocket,
+  Sparkles,
   Repeat,
-  Gift,
-  Clock,
+  TrendingUp,
   BarChart3,
 } from "lucide-react";
 
@@ -42,8 +40,8 @@ type PointsResult = {
 type FeatureCard = {
   title: string;
   desc: string;
-  icon: LucideIcon;
-  iconPosition: string;
+  icon?: LucideIcon;
+  iconPosition?: string;
 };
 
 type StepCard = {
@@ -114,7 +112,6 @@ export default function HomePage() {
       return;
     }
 
-    // Hello Discount
     let helloDiscount = 0;
     let helloTier = "-";
     let helloRate = "0%";
@@ -133,7 +130,6 @@ export default function HomePage() {
       helloRate = "5%";
     }
 
-    // Active Cashback
     let cashback = 0;
     let cashbackTier = "-";
     let cashbackRate = "0%";
@@ -224,16 +220,14 @@ export default function HomePage() {
     {
       title: "Partner Logistik Jangka Panjang",
       desc: "Bukan sekadar vendor, tapi partner yang siap support ekspansi dan kebutuhan pengiriman harian Anda.",
-    } as FeatureCard, // 
+    },
     {
       title: "Siap Scale Up Nasional",
       desc: "Cocok untuk bisnis dengan cabang, warehouse, atau distribusi multi-kota di seluruh Indonesia.",
       icon: Building2,
-      iconPosition: "bottom-3 left-3",
+      iconPosition: "bottom-3 right-3",
     },
   ];
-
-
 
   const stepCards: StepCard[] = [
     {
@@ -288,7 +282,7 @@ export default function HomePage() {
         image="/og-image.png"
       />
 
-      {/* Frame khusus landing: konten + footer */}
+      {/* Frame khusus landing: konten saja, tanpa footer global */}
       <div className="flex h-full flex-col">
         <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-6xl space-y-16 px-4 py-10">
@@ -417,7 +411,7 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* 4 card kecil dengan icon variatif */}
+                {/* 4 card kecil, icon hanya di beberapa */}
                 <div className="grid grid-cols-2 gap-4">
                   {featureCards.map((item) => {
                     const Icon = item.icon;
@@ -426,13 +420,15 @@ export default function HomePage() {
                         key={item.title}
                         className="glass space-y-1 p-4 pt-6"
                       >
-                        <div
-                          className={`absolute ${item.iconPosition} z-[1]`}
-                        >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                            <Icon className="h-4 w-4 text-[#ffebd1]" />
+                        {Icon && item.iconPosition && (
+                          <div
+                            className={`absolute ${item.iconPosition} z-[1]`}
+                          >
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
+                              <Icon className="h-4 w-4 text-[#ffebd1]" />
+                            </div>
                           </div>
-                        </div>
+                        )}
                         <h4
                           className="text-sm font-semibold pr-8"
                           style={{ color: "var(--accent)" }}
@@ -469,7 +465,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 3 langkah ringkas, tiap card ada icon beda posisi */}
+              {/* 3 langkah ringkas, di sini ikon tetap dipakai */}
               <div className="grid gap-6 md:grid-cols-3">
                 {stepCards.map((step) => {
                   const Icon = step.icon;
@@ -805,244 +801,6 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* LINIMASA KEMITRAAN */}
-            <section className="space-y-8">
-              <div className="space-y-2 text-center">
-                <h2 className="text-2xl font-bold md:text-3xl">
-                  Linimasa Implementasi CARGO Rewards untuk Bisnis Anda
-                </h2>
-                <p
-                  className="text-sm"
-                  style={{ color: "rgba(247,248,250,0.8)" }}
-                >
-                  Gambaran perjalanan Anda bersama UGC Logistics dari sebelum
-                  go-live sampai fase pertumbuhan – lengkap dengan kontrol{" "}
-                  <strong>SLA, biaya, dan benefit loyalty</strong>.
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                {/* Tiap fase ada icon di kiri judul */}
-                <button
-                  type="button"
-                  onClick={() => togglePhase(1)}
-                  className="glass text-left text-xs md:text-sm p-4"
-                  style={{
-                    borderColor:
-                      activePhase === 1 ? "var(--accent)" : "var(--border)",
-                  }}
-                >
-                  <div className="mb-1 flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                      <Clock className="h-3.5 w-3.5 text-[#ffecd5]" />
-                    </div>
-                    <div>
-                      <p
-                        className="text-[11px] uppercase tracking-[0.2em]"
-                        style={{ color: "rgba(247,248,250,0.6)" }}
-                      >
-                        Fase 1
-                      </p>
-                      <p
-                        className="font-semibold"
-                        style={{ color: "var(--accent)" }}
-                      >
-                        Persiapan &amp; Onboarding
-                      </p>
-                    </div>
-                  </div>
-                  <p
-                    className="mt-1 text-xs"
-                    style={{ color: "rgba(247,248,250,0.8)" }}
-                  >
-                    Fondasi kemitraan disiapkan sebelum pengiriman pertama,
-                    supaya rollout program loyalitas rapi dan bisa dijelaskan ke
-                    internal.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => togglePhase(2)}
-                  className="glass text-left text-xs md:text-sm p-4"
-                  style={{
-                    borderColor:
-                      activePhase === 2 ? "var(--accent)" : "var(--border)",
-                  }}
-                >
-                  <div className="mb-1 flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                      <BarChart3 className="h-3.5 w-3.5 text-[#ffecd5]" />
-                    </div>
-                    <div>
-                      <p
-                        className="text-[11px] uppercase tracking-[0.2em]"
-                        style={{ color: "rgba(247,248,250,0.6)" }}
-                      >
-                        Fase 2
-                      </p>
-                      <p
-                        className="font-semibold"
-                        style={{ color: "var(--accent)" }}
-                      >
-                        Aktivasi &amp; Monitoring
-                      </p>
-                    </div>
-                  </div>
-                  <p
-                    className="mt-1 text-xs"
-                    style={{ color: "rgba(247,248,250,0.8)" }}
-                  >
-                    Periode awal pengiriman dengan monitoring performa, SLA, dan
-                    validasi benefit diskon, cashback, serta poin.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => togglePhase(3)}
-                  className="glass text-left text-xs md:text-sm p-4"
-                  style={{
-                    borderColor:
-                      activePhase === 3 ? "var(--accent)" : "var(--border)",
-                  }}
-                >
-                  <div className="mb-1 flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                      <TrendingUp className="h-3.5 w-3.5 text-[#ffecd5]" />
-                    </div>
-                    <div>
-                      <p
-                        className="text-[11px] uppercase tracking-[0.2em]"
-                        style={{ color: "rgba(247,248,250,0.6)" }}
-                      >
-                        Fase 3
-                      </p>
-                      <p
-                        className="font-semibold"
-                        style={{ color: "var(--accent)" }}
-                      >
-                        Pertumbuhan &amp; Scale Up
-                      </p>
-                    </div>
-                  </div>
-                  <p
-                    className="mt-1 text-xs"
-                    style={{ color: "rgba(247,248,250,0.8)" }}
-                  >
-                    Optimalisasi rute, coverage, dan biaya – sekaligus eskalasi
-                    level kemitraan dan benefit seiring naiknya volume.
-                  </p>
-                </button>
-              </div>
-
-              <div className="glass space-y-2 p-6 text-xs md:text-sm">
-                {activePhase === 1 && (
-                  <>
-                    <h3 className="font-semibold">
-                      Timeline Persiapan (sebelum bulan 1)
-                    </h3>
-                    <ul className="list-inside list-disc space-y-1">
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Transparansi program:
-                        </strong>{" "}
-                        mekanisme, syarat &amp; ketentuan, dan alur klaim
-                        benefit dijelaskan secara clear agar mudah disampaikan
-                        ke tim finance, procurement, dan operasional.
-                      </li>
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Pemetaan kebutuhan:
-                        </strong>{" "}
-                        profil pengiriman, rute utama, SLA, dan pola demand
-                        dianalisis agar setup skema layanan lebih presisi.
-                      </li>
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Desain solusi:
-                        </strong>{" "}
-                        struktur harga, jenis layanan (FTL/LTL/express), dan
-                        skema reward disepakati bersama sebagai dasar kerja
-                        sama.
-                      </li>
-                    </ul>
-                  </>
-                )}
-
-                {activePhase === 2 && (
-                  <>
-                    <h3 className="font-semibold">
-                      Timeline Aktivasi (bulan 1 - 3)
-                    </h3>
-                    <ul className="list-inside list-disc space-y-1">
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Go-live pengiriman:
-                        </strong>{" "}
-                        pengiriman awal dimonitor secara ketat untuk memastikan
-                        delivery, SLA, dan update status berjalan sesuai
-                        komitmen.
-                      </li>
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Review berkala:
-                        </strong>{" "}
-                        laporan singkat performa pengiriman, exception, dan
-                        feedback lapangan dibahas rutin untuk fine-tuning.
-                      </li>
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Validasi benefit:
-                        </strong>{" "}
-                        diskon, cashback, dan poin di-rekap supaya tim Anda
-                        benar-benar merasakan dampak finansial dari program
-                        loyalitas logistik ini.
-                      </li>
-                    </ul>
-                  </>
-                )}
-
-                {activePhase === 3 && (
-                  <>
-                    <h3 className="font-semibold">
-                      Timeline Pertumbuhan (bulan 4 - 6 dan seterusnya)
-                    </h3>
-                    <ul className="list-inside list-disc space-y-1">
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Laporan kinerja menyeluruh:
-                        </strong>{" "}
-                        analisis volume, rute, SLA, dan biaya logistik untuk
-                        mencari peluang efisiensi dan konsolidasi pengiriman.
-                      </li>
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Optimalisasi berkelanjutan:
-                        </strong>{" "}
-                        penyesuaian moda, jadwal, dan kombinasi layanan agar
-                        pengiriman cargo bisnis Anda tetap agile dan efisien.
-                      </li>
-                      <li>
-                        <strong style={{ color: "var(--accent)" }}>
-                          Eskalasi level &amp; benefit:
-                        </strong>{" "}
-                        saat naik ke Gold/Platinum, prioritas layanan, poin,
-                        dan potensi cashback ikut meningkat.
-                      </li>
-                    </ul>
-                  </>
-                )}
-
-                {activePhase === null && (
-                  <p style={{ color: "rgba(247,248,250,0.8)" }}>
-                    Pilih salah satu fase di atas untuk melihat detail
-                    linimasa implementasi CARGO Rewards.
-                  </p>
-                )}
-              </div>
-            </section>
-
             {/* CTA AKHIR */}
             <section className="space-y-4 text-center">
               <h2 className="text-2xl font-bold md:text-3xl">
@@ -1089,7 +847,6 @@ export default function HomePage() {
             </section>
           </div>
         </main>
-
       </div>
     </>
   );
