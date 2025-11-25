@@ -15,10 +15,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      {/* className app-shell dipakai untuk background blob di globals.css */}
+      {/* app-shell = base navy, shape abstract diatur via globals.css */}
       <body className="app-shell h-screen overflow-hidden antialiased">
+        {/* LAYER SHAPE ABSTRACT ORANGE–RED (3–5 element) */}
+        <div className="bg-orb-layer">
+          <div className="bg-orb bg-orb-1" />
+          <div className="bg-orb bg-orb-2" />
+          <div className="bg-orb bg-orb-3" />
+          <div className="bg-orb bg-orb-4" />
+          <div className="bg-orb bg-orb-5" />
+        </div>
+
+        {/* KONTEN PORTAL – di atas shape */}
         <AuthProvider>
-          {/* Semua konten di atas layer background */}
           <div className="relative z-10 flex h-full flex-col">
             <RewardsHeader />
             <div className="flex-1 overflow-hidden">{children}</div>
