@@ -34,6 +34,9 @@ export default function RootLayout({
             <div className="absolute bottom-10 right-6 h-40 w-40 rounded-[45%] bg-gradient-to-br from-[#ffb347] via-[#ff7a1a] to-[#ff4600] blur-xl opacity-65" />
           </div>
 
+          <div className="flex h-full flex-col">
+            {/* HEADER GLOBAL (logo CARGO Rewards) */}
+            <RewardsHeader />
 
             {/* Area konten, nanti tiap page yang atur scroll-nya */}
             <div className="flex-1 overflow-hidden">{children}</div>
