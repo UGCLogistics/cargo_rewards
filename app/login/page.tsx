@@ -109,7 +109,7 @@ export default function LoginPage() {
           <div className="pointer-events-none absolute -inset-x-10 -top-16 -bottom-10 -z-10 opacity-40 blur-3xl bg-[radial-gradient(circle_at_top,_rgba(255,70,0,0.7)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.9)_0,_transparent_60%)]" />
 
           {/* CARD LOGIN – pakai glass-card */}
-          <div className="glass-card px-6 py-7 md:px-7 md:py-8">
+          <div className="glass-card px-7 py-8 md:px-7 md:py-8">
             {/* Logo */}
             <div className="mb-4 flex items-center justify-center">
               <Image
