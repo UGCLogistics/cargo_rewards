@@ -10,15 +10,10 @@
 
 /* Colour palette and re-usable variables */
 :root {
-  /* Base background colour */
   --background: #020617; /* almost black navy */
-  /* Card and sidebar surfaces use a semi-transparent layer to create a glass effect */
   --surface: rgba(255, 255, 255, 0.05);
-  /* Borders are subtle and help separate surfaces */
   --border: rgba(255, 255, 255, 0.12);
-  /* Primary accent colour drawn from the brand palette */
   --accent: #ff4600;
-  /* Default text colour */
   --text: #f7f8fa;
 }
 
@@ -29,7 +24,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
     Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
     sans-serif;
-  /* Dark gradient background – bukan glass, hanya base canvas */
+
+  /* background dasar gelap, blob orange-red ditambah dari layout.tsx */
   background: radial-gradient(circle at top left, #111827, transparent 60%),
     radial-gradient(circle at bottom right, #020617, transparent 55%),
     var(--background);
@@ -80,7 +76,7 @@ body {
   -webkit-backdrop-filter: blur(22px) saturate(165%);
   box-shadow:
     0 26px 60px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(15, 23, 42, 0.8); /* edge lebih tegas */
+    0 0 0 1px rgba(15, 23, 42, 0.8);
 }
 
 /* Highlight pinggir “kaca” */
@@ -101,7 +97,7 @@ body {
   pointer-events: none;
 }
 
-/* Noise halus biar nggak kelihatan terlalu flat */
+/* Noise halus biar nggak terlalu flat */
 .glass::after,
 .glass-card::after {
   content: "";
