@@ -97,7 +97,7 @@ body {
 .bg-orb-3 {
   /* posisinya kira-kira di belakang hero, center-ish */
   top: 250px;          /* atur tinggi supaya “mepet” bagian tengah card */
-  left: -30%;
+  right: -30%;
   width: 450px;
   height: 450px;
   transform: translateX(-40%) rotate(-8deg);
