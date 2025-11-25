@@ -77,8 +77,8 @@ body {
 
 /* Shape 1 – kiri atas (vivid, pojok) */
 .bg-orb-1 {
-  top: 60px;
-  left: 60px;
+  top: 40px;
+  left: 40px;
   width: 260px;
   height: 260px;
   transform: rotate(-10deg);
@@ -97,10 +97,10 @@ body {
 .bg-orb-3 {
   /* posisinya kira-kira di belakang hero, center-ish */
   top: 400px;          /* atur tinggi supaya “mepet” bagian tengah card */
-  right: -90px;
+  right: -85px;
   width: 450px;
   height: 450px;
-  transform: translateX(-20%) rotate(-6deg);
+  transform: translateX(-20%) rotate(-3deg);
   opacity: 0.9;
 }
 
