@@ -1015,8 +1015,6 @@ export default function HomePage() {
           </div>
         </main>
 
-        {/* FOOTER khusus landing page */}
-        <RewardsFooter />
       </div>
     </>
   );
