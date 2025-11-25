@@ -15,15 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      {/* app-shell = base navy, shape abstract diatur via globals.css */}
+      {/* app-shell -> base navy, shape diatur di globals.css */}
       <body className="app-shell h-screen overflow-hidden antialiased">
-        {/* LAYER SHAPE ABSTRACT ORANGE–RED (3–5 element) */}
+        {/* SHAPE ABSTRACT ORANGE–RED (3D, 3 buah, tanpa blur) */}
         <div className="bg-orb-layer">
           <div className="bg-orb bg-orb-1" />
           <div className="bg-orb bg-orb-2" />
           <div className="bg-orb bg-orb-3" />
-          <div className="bg-orb bg-orb-4" />
-          <div className="bg-orb bg-orb-5" />
         </div>
 
         {/* KONTEN PORTAL – di atas shape */}
