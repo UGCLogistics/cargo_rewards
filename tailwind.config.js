@@ -9,6 +9,11 @@ module.exports = {
     extend: {
       colors: {
         accent: "#ff4600",
+        cargo: {
+          bg: "#0d121a",
+          surface: "rgba(255, 255, 255, 0.05)",
+          border: "rgba(255, 255, 255, 0.12)",
+        },
       },
     },
   },
