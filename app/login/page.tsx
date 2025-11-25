@@ -2,7 +2,10 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import supabase from "../../lib/supabaseClient";
+import ugcLogo from "public/logougcorangewhite.png";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +38,9 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setErrorMsg(error.message || "Gagal login. Periksa kembali email & password.");
+        setErrorMsg(
+          error.message || "Gagal login. Periksa kembali email & password."
+        );
         return;
       }
 
@@ -77,7 +82,8 @@ export default function LoginPage() {
 
       if (error) {
         setErrorMsg(
-          error.message || "Gagal mengirim link reset password. Coba lagi beberapa saat."
+          error.message ||
+            "Gagal mengirim link reset password. Coba lagi beberapa saat."
         );
         return;
       }
@@ -94,96 +100,127 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
-      <div className="max-w-md w-full relative">
-        {/* Glow background */}
-        <div className="absolute inset-0 blur-3xl opacity-40 bg-gradient-to-br from-orange-500 via-amber-400 to-sky-500 pointer-events-none" />
+    // PENTING: h-full + overflow-auto biar bisa scroll di dalam layout yang overflow-hidden
+    <div className="h-full overflow-auto px-4 py-6">
+      <div className="mx-auto flex max-w-md items-start justify-center pb-10">
+        <div className="relative w-full">
+          {/* Glow background senada register */}
+          <div className="pointer-events-none absolute -inset-x-10 -top-16 -bottom-10 -z-10 opacity-40 blur-3xl bg-[radial-gradient(circle_at_top,_rgba(255,70,0,0.7)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.9)_0,_transparent_60%)]" />
 
-        <div className="relative bg-slate-900/80 border border-slate-700/70 shadow-2xl shadow-black/50 rounded-2xl p-8 backdrop-blur-xl">
-          <div className="mb-6 text-center">
-            <h1 className="text-sm font-semibold tracking-[0.3em] text-slate-400 uppercase">
-              CARGO Rewards
-            </h1>
-            <h2 className="mt-3 text-2xl font-semibold text-slate-50">
-              Login Portal
-            </h2>
-            <p className="mt-1 text-sm text-slate-400">
-              Masuk untuk melihat transaksi, poin, dan rewards Anda.
+          {/* CARD LOGIN – pakai glass-card */}
+          <div className="glass-card px-6 py-7 md:px-7 md:py-8">
+            {/* Logo */}
+            <div className="mb-4 flex items-center justify-center">
+              <Image
+                src={ugcLogo}
+                alt="UGC Logistics"
+                width={260}
+                height={68}
+                className="h-14 w-auto md:h-16"
+                priority
+              />
+            </div>
+
+            {/* Heading & copy */}
+            <div className="mb-6 text-center">
+              <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-slate-400">
+                C.A.R.G.O Rewards
+              </p>
+              <h1 className="text-2xl font-semibold text-slate-50">
+                Login ke Portal Rewards
+              </h1>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Masuk untuk memantau{" "}
+                <span className="font-medium text-slate-100">
+                  transaksi, poin, dan benefit
+                </span>{" "}
+                CARGO Rewards yang Anda dapatkan bersama UGC Logistics.
+              </p>
+            </div>
+
+            {/* Alert error */}
+            {errorMsg && (
+              <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-300">
+                {errorMsg}
+              </div>
+            )}
+
+            {/* Alert info */}
+            {infoMsg && (
+              <div className="mb-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-300">
+                {infoMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-200">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#ff4600]"
+                  placeholder="nama@perusahaan.com"
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-200">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#ff4600]"
+                  placeholder="Masukkan password"
+                />
+              </div>
+
+              {/* Lupa password */}
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500">
+                  Lupa password? Masukkan email lalu kirim link reset.
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetPassword}
+                  disabled={resetLoading}
+                  className="text-[#ffb366] hover:text-[#ffd0a0] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {resetLoading ? "Mengirim…" : "Kirim link reset"}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-primary mt-2 w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoading ? "Memproses..." : "Masuk ke Portal"}
+              </button>
+            </form>
+
+            <p className="mt-4 text-center text-[11px] text-slate-400">
+              Belum punya akun?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-[#ffb366] hover:text-[#ffd0a0]"
+              >
+                Daftar sebagai pelanggan baru
+              </Link>
+            </p>
+
+            <p className="mt-2 text-center text-[10px] text-slate-500">
+              Powered by UGC Logistics – CARGO Rewards Portal
             </p>
           </div>
-
-          {/* Alert error */}
-          {errorMsg && (
-            <div className="mb-4 rounded-lg border border-red-500/40 bg-red-950/60 px-3 py-2 text-sm text-red-100">
-              {errorMsg}
-            </div>
-          )}
-
-          {/* Alert info */}
-          {infoMsg && (
-            <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-950/60 px-3 py-2 text-sm text-emerald-100">
-              {infoMsg}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Email
-              </label>
-              <input
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
-                placeholder="nama@perusahaan.com"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 focus:outline-none"
-                placeholder="Masukkan password"
-              />
-            </div>
-
-            {/* Lupa password */}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">
-                Lupa password?
-              </span>
-              <button
-                type="button"
-                onClick={handleResetPassword}
-                disabled={resetLoading}
-                className="text-orange-400 hover:text-orange-300 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {resetLoading ? "Mengirim link..." : "Kirim link reset ke email"}
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-orange-900/40 hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-            >
-              {isLoading ? "Memproses..." : "Masuk ke Portal"}
-            </button>
-          </form>
-
-          <p className="mt-4 text-[11px] text-center text-slate-500">
-            Powered by UGC Logistics – CARGO Rewards Portal
-          </p>
         </div>
       </div>
     </div>
