@@ -182,13 +182,16 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="Program Loyalitas Logistik | CARGO Rewards"
-        description="CARGO Rewards adalah program loyalitas logistik terdepan di Indonesia. Dapatkan diskon langsung, cashback berkelanjutan dan poin tak terbatas untuk setiap pengiriman."
+        title="Program Loyalitas Logistik & Pengiriman Cargo | CARGO Rewards"
+        description="CARGO Rewards adalah program loyalitas logistik dari UGC Logistics untuk bisnis yang rutin menggunakan jasa pengiriman cargo di seluruh Indonesia. Hemat biaya pengiriman dengan diskon, cashback, dan poin loyalty di setiap transaksi."
         keywords={[
           "program loyalitas logistik",
-          "diskon pengiriman",
-          "cashback logistik",
-          "poin pengiriman",
+          "jasa pengiriman cargo",
+          "hemat biaya pengiriman",
+          "logistik bisnis Indonesia",
+          "cashback pengiriman",
+          "loyalty program logistik",
+          "UGC Logistics",
           "rewards cargo",
         ]}
         url="https://ugc-logistics-rewards.com"
@@ -204,7 +207,7 @@ export default function HomePage() {
             <section className="flex items-center justify-center">
               <div className="relative w-full max-w-5xl py-10">
                 {/* blok gradient di kiri belakang kartu */}
-                <div className="pointer-events-none absolute -left-4 top-1/2 h-56 w-56 -translate-y-1/2 rounded-3xl bg-gradient-to-tr from-orange-500 via-orange-400 to-pink-500 blur-md opacity-95" />
+                <div className="pointer-events-none absolute -left-4 top-1/2 h-56 w-56 -translate-y-1/2 rounded-3xl bg-gradient-to-tr from-orange-500 via-orange-400 to-pink-500 opacity-95" />
 
                 {/* kartu kaca utama */}
                 <div className="glass-card relative mx-auto max-w-3xl px-8 py-10">
@@ -212,52 +215,52 @@ export default function HomePage() {
                     className="mb-4 text-xs uppercase tracking-[0.25em] text-center md:text-left"
                     style={{ color: "rgba(247,248,250,0.6)" }}
                   >
-                    UGC LOGISTICS • C.A.R.G.O REWARDS
+                    UGC LOGISTICS • CARGO REWARDS PORTAL
                   </p>
 
                   <h1 className="mb-4 text-3xl font-extrabold leading-tight md:text-5xl">
-                    Bukan Sekadar Logistik,{" "}
-                    <br className="hidden md:block" />
-                    Ini{" "}
+                    Ubah Biaya Logistik Jadi{" "}
                     <span style={{ color: "var(--accent)" }}>
-                      Kemitraan Cerdas
-                    </span>{" "}
-                    untuk Bisnis Anda.
+                      Aset yang Menghasilkan
+                    </span>
+                    .
                   </h1>
 
                   <p
                     className="mb-8 max-w-2xl text-sm md:text-base"
                     style={{ color: "rgba(247,248,250,0.8)" }}
                   >
-                    C.A.R.G.O Rewards memberikan kombinasi diskon langsung,
-                    cashback berbasis volume dan poin loyalitas tanpa batas
-                    sehingga biaya logistik Anda semakin efisien dan terukur.
+                    CARGO Rewards adalah{" "}
+                    <strong>program loyalitas logistik</strong> dari UGC
+                    Logistics untuk bisnis yang rutin menggunakan{" "}
+                    <strong>jasa pengiriman cargo</strong>. Setiap pengiriman
+                    barang Anda bisa kembali lagi dalam bentuk{" "}
+                    <strong>diskon, cashback, dan poin loyalty</strong> yang
+                    membantu menekan <strong>biaya pengiriman</strong>.
                   </p>
 
                   <div className="flex flex-wrap gap-3 md:justify-start justify-center">
                     {user ? (
-                      <Link href="/dashboard">
-                        <button className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase">
-                          Buka Dashboard Anda
-                        </button>
-                      </Link>
+                      <>
+                        <Link href="/dashboard">
+                          <button className="btn-primary">
+                            Buka Dashboard Rewards
+                          </button>
+                        </Link>
+                        <a href="#simulasi" className="btn-outline">
+                          Lihat Simulasi Benefit
+                        </a>
+                      </>
                     ) : (
                       <>
                         <Link href="/register">
-                          <button className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase">
-                            Daftar Sekarang
+                          <button className="btn-primary">
+                            Daftar CARGO Rewards
                           </button>
                         </Link>
                         <Link href="/login">
-                          <button
-                            className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase"
-                            style={{
-                              backgroundColor: "transparent",
-                              color: "var(--accent)",
-                              border: "1px solid var(--accent)",
-                            }}
-                          >
-                            Masuk
+                          <button className="btn-outline">
+                            Saya Sudah Punya Akun
                           </button>
                         </Link>
                       </>
@@ -274,58 +277,64 @@ export default function HomePage() {
                   className="text-2xl font-bold md:text-3xl"
                   style={{ color: "var(--accent)" }}
                 >
-                  Memperkenalkan C.A.R.G.O Rewards
+                  Program Loyalitas Logistik untuk Bisnis yang Serius Bertumbuh
                 </h2>
                 <p
                   className="text-xs md:text-sm"
                   style={{ color: "rgba(247,248,250,0.7)" }}
                 >
-                  C = Cashback • A = Acquisition • R = Rewards • G = Growth • O
-                  = Opportunities
+                  Dirancang untuk perusahaan yang rutin melakukan{" "}
+                  <strong>pengiriman cargo</strong>, butuh partner logistik yang
+                  bukan cuma kirim barang, tapi juga bantu{" "}
+                  <strong>optimasi cost dan cashflow</strong>.
                 </p>
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="glass space-y-4 p-6 md:p-7">
                   <h3 className="text-lg font-semibold md:text-xl">
-                    Mengapa Program Ini Penting Untuk Anda?
+                    Kenapa CARGO Rewards Relevan untuk Bisnis Anda?
                   </h3>
                   <p
                     className="text-sm"
                     style={{ color: "rgba(247,248,250,0.9)" }}
                   >
-                    Harga kompetitif sudah menjadi baseline. Yang membedakan
-                    adalah seberapa jauh partner logistik Anda ikut mendukung
-                    pencapaian target bisnis, bukan sekadar mengirimkan barang.
+                    Di era persaingan yang makin ketat,{" "}
+                    <strong>biaya logistik</strong> jadi salah satu komponen
+                    terbesar di struktur biaya. Harga murah saja tidak cukup,
+                    Anda perlu <strong>struktur benefit</strong> yang jelas,
+                    terukur, dan bisa di-present ke manajemen.
                   </p>
                   <p
                     className="text-sm"
                     style={{ color: "rgba(247,248,250,0.9)" }}
                   >
-                    Melalui C.A.R.G.O Rewards, setiap pengiriman menghasilkan{" "}
-                    <strong>nilai finansial balik</strong> dalam bentuk diskon,
-                    cashback, dan poin yang bisa dioptimalkan kembali untuk
-                    ekspansi bisnis Anda.
+                    Dengan CARGO Rewards, setiap pengiriman melalui{" "}
+                    <strong>UGC Logistics</strong> akan tercatat sebagai{" "}
+                    <strong>nilai balik</strong> dalam bentuk diskon, cashback,
+                    dan poin. Semua bisa Anda monitor dari dashboard, sehingga{" "}
+                    <strong>ROI aktivitas logistik</strong> lebih mudah
+                    dijelaskan.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     {
-                      title: "Akselerasi",
-                      desc: "Keuntungan langsung sejak pengiriman pertama.",
+                      title: "Hemat Biaya Pengiriman",
+                      desc: "Optimalkan biaya kirim cargo domestik dengan kombinasi harga kompetitif, diskon, dan cashback yang terukur.",
                     },
                     {
-                      title: "Apresiasi",
-                      desc: "Setiap volume pengiriman dihargai dengan benefit nyata.",
+                      title: "Cashback & Loyalty Points",
+                      desc: "Setiap transaksi menghasilkan poin loyalty dan cashback yang bisa di-reinvest ke pengiriman berikutnya.",
                     },
                     {
-                      title: "Loyalitas",
-                      desc: "Makin sering kirim, makin besar hak benefit Anda.",
+                      title: "Partner Logistik Jangka Panjang",
+                      desc: "Bukan sekadar vendor, tapi partner yang siap support ekspansi dan kebutuhan pengiriman bisnis Anda.",
                     },
                     {
-                      title: "Pertumbuhan",
-                      desc: "Naik level dari Silver, Gold hingga Platinum.",
+                      title: "Siap Scale Up Nasional",
+                      desc: "Cocok untuk bisnis dengan cabang, warehouse, atau distribusi multi-kota di Indonesia.",
                     },
                   ].map((item) => (
                     <div key={item.title} className="glass space-y-1 p-4">
@@ -348,17 +357,19 @@ export default function HomePage() {
             </section>
 
             {/* 3 LANGKAH + KALKULATOR */}
-            <section className="space-y-10">
+            <section className="space-y-10" id="simulasi">
               <div className="space-y-2 text-center">
                 <h2 className="text-2xl font-bold md:text-3xl">
-                  3 Langkah Menuju Keuntungan Maksimal
+                  3 Langkah Simple Maksimalkan Loyalty Rewards Logistik
                 </h2>
                 <p
                   className="text-sm"
                   style={{ color: "rgba(247,248,250,0.8)" }}
                 >
-                  Dari diskon sambutan, cashback berbasis volume, sampai poin
-                  loyalitas jangka panjang.
+                  Mulai dari <strong>diskon sambutan</strong>,{" "}
+                  <strong>cashback 3 bulan pertama</strong>, sampai{" "}
+                  <strong>poin berulang</strong> untuk setiap pengiriman cargo
+                  bisnis Anda.
                 </p>
               </div>
 
@@ -375,13 +386,14 @@ export default function HomePage() {
                     className="text-sm font-semibold"
                     style={{ color: "var(--accent)" }}
                   >
-                    Registrasi - Hello Discount
+                    Registrasi &amp; Hello Discount
                   </h3>
                   <p
                     className="text-xs"
                     style={{ color: "rgba(247,248,250,0.9)" }}
                   >
-                    Diskon langsung di pengiriman pertama:
+                    Begitu onboard, pengiriman pertama Anda langsung dapat
+                    <strong> Hello Discount</strong>:
                   </p>
                   <ul
                     className="space-y-1 text-xs"
@@ -404,13 +416,14 @@ export default function HomePage() {
                     className="text-sm font-semibold"
                     style={{ color: "var(--accent)" }}
                   >
-                    Aktivasi - Active Cashback
+                    Aktivasi Volume &amp; Active Cashback
                   </h3>
                   <p
                     className="text-xs"
                     style={{ color: "rgba(247,248,250,0.9)" }}
                   >
-                    Cashback dari akumulasi transaksi 3 bulan:
+                    Akumulasi pengiriman 3 bulan pertama dikonversi menjadi
+                    cashback:
                   </p>
                   <ul
                     className="space-y-1 text-xs"
@@ -432,14 +445,16 @@ export default function HomePage() {
                     className="text-sm font-semibold"
                     style={{ color: "var(--accent)" }}
                   >
-                    Retensi - Unlimited Points
+                    Retensi &amp; Unlimited Points
                   </h3>
                   <p
                     className="text-xs"
                     style={{ color: "rgba(247,248,250,0.9)" }}
                   >
-                    Setiap Rp 10.000 pengiriman = 1 poin. 1 poin = Rp 250.
-                    Level Silver / Gold / Platinum mengalikan poin dan bonus.
+                    Setiap <strong>Rp 10.000</strong> pengiriman ={" "}
+                    <strong>1 poin</strong>. 1 poin = <strong>Rp 250</strong>.
+                    Level Silver / Gold / Platinum akan{" "}
+                    <strong>mengalikan poin &amp; bonus</strong> Anda.
                   </p>
                 </div>
               </div>
@@ -447,7 +462,7 @@ export default function HomePage() {
               {/* Kalkulator Hello Discount + Active Cashback */}
               <div className="glass space-y-4 p-6">
                 <h3 className="text-center text-base font-semibold md:text-lg">
-                  Simulasi Hello Discount & Active Cashback
+                  Simulasi Diskon &amp; Cashback Pengiriman Cargo Anda
                 </h3>
 
                 <div className="grid items-start gap-4 md:grid-cols-3">
@@ -505,9 +520,9 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={handleCalculateInitial}
-                      className="mt-1 text-sm font-semibold"
+                      className="btn-ghost mt-1"
                     >
-                      Lihat Potensi Reward Awal
+                      Hitung Diskon &amp; Cashback
                     </button>
                   </div>
 
@@ -568,7 +583,7 @@ export default function HomePage() {
                     {!initialError && !initialResult && (
                       <p style={{ color: "rgba(247,248,250,0.7)" }}>
                         Masukkan nilai transaksi untuk melihat simulasi diskon +
-                        cashback.
+                        cashback pengiriman cargo Anda.
                       </p>
                     )}
                   </div>
@@ -578,7 +593,7 @@ export default function HomePage() {
               {/* Kalkulator Unlimited Points */}
               <div className="glass space-y-4 p-6">
                 <h3 className="text-center text-base font-semibold md:text-lg">
-                  Simulasi Unlimited Points & Level Kemitraan
+                  Simulasi Poin Loyalty &amp; Level Kemitraan
                 </h3>
 
                 <div className="grid items-start gap-4 md:grid-cols-3">
@@ -607,7 +622,8 @@ export default function HomePage() {
                           className="text-[11px]"
                           style={{ color: "rgba(247,248,250,0.6)" }}
                         >
-                          Menentukan level Silver / Gold / Platinum.
+                          Menentukan level Silver / Gold / Platinum dalam
+                          program loyalitas logistik Anda.
                         </p>
                       </div>
                       <div className="space-y-1">
@@ -633,7 +649,7 @@ export default function HomePage() {
                           className="text-[11px]"
                           style={{ color: "rgba(247,248,250,0.6)" }}
                         >
-                          Digunakan untuk menghitung poin & nilai reward
+                          Digunakan untuk menghitung poin &amp; nilai reward
                           kuartalan.
                         </p>
                       </div>
@@ -642,9 +658,9 @@ export default function HomePage() {
                     <button
                       type="button"
                       onClick={handleCalculatePoints}
-                      className="mt-1 text-sm font-semibold"
+                      className="btn-ghost mt-1"
                     >
-                      Lihat Potensi Poin & Reward
+                      Hitung Poin &amp; Level
                     </button>
                   </div>
 
@@ -724,7 +740,7 @@ export default function HomePage() {
                     {!pointsError && !pointsResult && (
                       <p style={{ color: "rgba(247,248,250,0.7)" }}>
                         Masukkan estimasi omzet untuk melihat simulasi level,
-                        poin dan nilai reward.
+                        poin dan nilai reward program loyalitas logistik Anda.
                       </p>
                     )}
                   </div>
@@ -736,14 +752,15 @@ export default function HomePage() {
             <section className="space-y-8">
               <div className="space-y-2 text-center">
                 <h2 className="text-2xl font-bold md:text-3xl">
-                  Linimasa Kemitraan CARGO Rewards
+                  Linimasa Implementasi CARGO Rewards untuk Bisnis Anda
                 </h2>
                 <p
                   className="text-sm"
                   style={{ color: "rgba(247,248,250,0.8)" }}
                 >
                   Gambaran perjalanan Anda bersama UGC Logistics dari sebelum
-                  go-live sampai fase pertumbuhan.
+                  go-live sampai fase pertumbuhan – lengkap dengan kontrol{" "}
+                  <strong>SLA, biaya, dan benefit loyalty</strong>.
                 </p>
               </div>
 
@@ -767,13 +784,15 @@ export default function HomePage() {
                     className="font-semibold"
                     style={{ color: "var(--accent)" }}
                   >
-                    Persiapan
+                    Persiapan &amp; Onboarding
                   </p>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(247,248,250,0.8)" }}
                   >
-                    Fondasi kemitraan disiapkan sebelum pengiriman pertama.
+                    Fondasi kemitraan disiapkan sebelum pengiriman pertama,
+                    supaya rollout program loyalitas rapi dan bisa dijelaskan ke
+                    internal.
                   </p>
                 </button>
 
@@ -796,14 +815,14 @@ export default function HomePage() {
                     className="font-semibold"
                     style={{ color: "var(--accent)" }}
                   >
-                    Aktivasi
+                    Aktivasi &amp; Monitoring
                   </p>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(247,248,250,0.8)" }}
                   >
-                    Periode awal pengiriman dengan monitoring dan validasi
-                    benefit.
+                    Periode awal pengiriman dengan monitoring performa, SLA, dan
+                    validasi benefit diskon, cashback, serta poin.
                   </p>
                 </button>
 
@@ -826,13 +845,14 @@ export default function HomePage() {
                     className="font-semibold"
                     style={{ color: "var(--accent)" }}
                   >
-                    Pertumbuhan
+                    Pertumbuhan &amp; Scale Up
                   </p>
                   <p
                     className="mt-1 text-xs"
                     style={{ color: "rgba(247,248,250,0.8)" }}
                   >
-                    Optimalisasi berkelanjutan dan eskalasi level & benefit.
+                    Optimalisasi rute, coverage, dan biaya – sekaligus eskalasi
+                    level kemitraan dan benefit seiring naiknya volume.
                   </p>
                 </button>
               </div>
@@ -848,22 +868,24 @@ export default function HomePage() {
                         <strong style={{ color: "var(--accent)" }}>
                           Transparansi program:
                         </strong>{" "}
-                        mekanisme, syarat dan ketentuan dijelaskan di awal
-                        sehingga mudah dijelaskan ke internal Anda.
+                        mekanisme, syarat &amp; ketentuan, dan alur klaim
+                        benefit dijelaskan secara clear agar mudah disampaikan
+                        ke tim finance, procurement, dan operasional.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
                           Pemetaan kebutuhan:
                         </strong>{" "}
-                        profil pengiriman, rute, SLA dan risiko dikaji sebelum
-                        go-live.
+                        profil pengiriman, rute utama, SLA, dan pola demand
+                        dianalisis agar setup skema layanan lebih presisi.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
                           Desain solusi:
                         </strong>{" "}
-                        skema harga, moda layanan dan standar layanan disepakati
-                        bersama.
+                        struktur harga, jenis layanan (FTL/LTL/express), dan
+                        skema reward disepakati bersama sebagai dasar kerja
+                        sama.
                       </li>
                     </ul>
                   </>
@@ -880,21 +902,23 @@ export default function HomePage() {
                           Go-live pengiriman:
                         </strong>{" "}
                         pengiriman awal dimonitor secara ketat untuk memastikan
-                        eksekusi berjalan sesuai SLA.
+                        delivery, SLA, dan update status berjalan sesuai
+                        komitmen.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
                           Review berkala:
                         </strong>{" "}
-                        laporan singkat performa dan issue logistik dibahas
-                        rutin.
+                        laporan singkat performa pengiriman, exception, dan
+                        feedback lapangan dibahas rutin untuk fine-tuning.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
                           Validasi benefit:
                         </strong>{" "}
-                        diskon, cashback dan poin direkap sehingga terasa dampak
-                        finansialnya.
+                        diskon, cashback, dan poin di-rekap supaya tim Anda
+                        benar-benar merasakan dampak finansial dari program
+                        loyalitas logistik ini.
                       </li>
                     </ul>
                   </>
@@ -908,24 +932,24 @@ export default function HomePage() {
                     <ul className="list-inside list-disc space-y-1">
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
-                          Laporan kinerja:
+                          Laporan kinerja menyeluruh:
                         </strong>{" "}
-                        analisis volume, rute, SLA dan biaya untuk melihat
-                        peluang efisiensi.
+                        analisis volume, rute, SLA, dan biaya logistik untuk
+                        mencari peluang efisiensi dan konsolidasi pengiriman.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
-                          Optimalisasi:
+                          Optimalisasi berkelanjutan:
                         </strong>{" "}
-                        perbaikan layout rute, konsolidasi pengiriman, atau
-                        penyesuaian moda.
+                        penyesuaian moda, jadwal, dan kombinasi layanan agar
+                        pengiriman cargo bisnis Anda tetap agile dan efisien.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
-                          Eskalasi level:
+                          Eskalasi level &amp; benefit:
                         </strong>{" "}
-                        saat naik ke Gold/Platinum, benefit dan prioritas
-                        layanan juga meningkat.
+                        saat naik ke Gold/Platinum, prioritas layanan, poin,
+                        dan potensi cashback ikut meningkat.
                       </li>
                     </ul>
                   </>
@@ -934,7 +958,7 @@ export default function HomePage() {
                 {activePhase === null && (
                   <p style={{ color: "rgba(247,248,250,0.8)" }}>
                     Pilih salah satu fase di atas untuk melihat detail
-                    linimasa.
+                    linimasa implementasi CARGO Rewards.
                   </p>
                 )}
               </div>
@@ -943,38 +967,38 @@ export default function HomePage() {
             {/* CTA AKHIR */}
             <section className="space-y-4 text-center">
               <h2 className="text-2xl font-bold md:text-3xl">
-                Siap Mengoptimalkan Logistik dan Reward Bisnis Anda?
+                Siap Hemat Biaya Pengiriman &amp; Maksimalkan Setiap Pengiriman
+                Cargo?
               </h2>
               <p
                 className="mx-auto max-w-xl text-sm md:text-base"
                 style={{ color: "rgba(247,248,250,0.8)" }}
               >
-                Bergabunglah dengan C.A.R.G.O Rewards dan ubah biaya logistik
-                menjadi aset yang menghasilkan diskon, cashback dan poin.
+                Bergabunglah dengan{" "}
+                <strong>program loyalitas logistik CARGO Rewards</strong> dan
+                ubah biaya pengiriman menjadi{" "}
+                <strong>diskon, cashback, dan poin loyalty</strong> yang bisa
+                membantu bisnis Anda tumbuh lebih sehat dan terukur.
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 {user ? (
-                  <Link href="/dashboard">
-                    <button className="text-sm font-semibold">
-                      Lanjut ke Dashboard
-                    </button>
-                  </Link>
+                  <>
+                    <Link href="/dashboard">
+                      <button className="btn-primary">
+                        Lanjut ke Dashboard Rewards
+                      </button>
+                    </Link>
+                    <a href="#simulasi" className="btn-outline">
+                      Lihat Simulasi untuk Perusahaan Anda
+                    </a>
+                  </>
                 ) : (
                   <>
                     <Link href="/register">
-                      <button className="text-sm font-semibold">
-                        Mulai Sekarang
-                      </button>
+                      <button className="btn-primary">Mulai CARGO Rewards</button>
                     </Link>
                     <Link href="/login">
-                      <button
-                        className="text-sm font-semibold"
-                        style={{
-                          backgroundColor: "transparent",
-                          color: "var(--accent)",
-                          border: "1px solid var(--accent)",
-                        }}
-                      >
+                      <button className="btn-outline">
                         Saya Sudah Punya Akun
                       </button>
                     </Link>
