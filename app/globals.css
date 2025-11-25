@@ -96,11 +96,11 @@ body {
 /* Shape 3 – di belakang hero card, nyentuh area card */
 .bg-orb-3 {
   /* posisinya kira-kira di belakang hero, center-ish */
-  top: 250px;          /* atur tinggi supaya “mepet” bagian tengah card */
-  right: -30%;
+  top: 400px;          /* atur tinggi supaya “mepet” bagian tengah card */
+  right: -80%;
   width: 450px;
   height: 450px;
-  transform: translateX(-40%) rotate(-8deg);
+  transform: translateX(-20%) rotate(-6deg);
   opacity: 0.9;
 }
 
