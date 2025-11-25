@@ -100,9 +100,10 @@ export default function LoginPage() {
   };
 
   return (
-    // PENTING: h-full + overflow-auto biar bisa scroll di dalam layout yang overflow-hidden
-    <div className="h-full overflow-auto px-4 py-6">
-      <div className="mx-auto flex max-w-md items-start justify-center pb-10">
+    // h-full + overflow-auto biar bisa scroll di dalam layout
+    <div className="h-full overflow-auto px-4">
+      {/* PADDING ATAS–BAWAH DI SINI */}
+      <div className="mx-auto flex max-w-md items-start justify-center py-10 md:py-16">
         <div className="relative w-full">
           {/* Glow background senada register */}
           <div className="pointer-events-none absolute -inset-x-10 -top-16 -bottom-10 -z-10 opacity-40 blur-3xl bg-[radial-gradient(circle_at_top,_rgba(255,70,0,0.7)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.9)_0,_transparent_60%)]" />
