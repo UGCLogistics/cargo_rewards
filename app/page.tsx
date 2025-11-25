@@ -224,9 +224,7 @@ export default function HomePage() {
     {
       title: "Partner Logistik Jangka Panjang",
       desc: "Bukan sekadar vendor, tapi partner yang siap support ekspansi dan kebutuhan pengiriman harian Anda.",
-      icon: Handshake as unknown as LucideIcon, // fallback if Handshake tidak tersedia
-      iconPosition: "bottom-3 right-3",
-    } as FeatureCard, // casting untuk Handshake
+    } as FeatureCard, // 
     {
       title: "Siap Scale Up Nasional",
       desc: "Cocok untuk bisnis dengan cabang, warehouse, atau distribusi multi-kota di seluruh Indonesia.",
@@ -235,8 +233,7 @@ export default function HomePage() {
     },
   ];
 
-  // NOTE: jika icon Handshake tidak ada di versi lucide Anda, ganti manual
-  // dengan salah satu icon lain (mis. Sparkles, Rocket, BarChart3).
+
 
   const stepCards: StepCard[] = [
     {
