@@ -22,17 +22,55 @@ html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-    sans-serif;
-
-  /* background dasar gelap, blob orange-red datang dari layout.tsx */
-  background:
-    radial-gradient(circle at top left, #050507, transparent 60%),
-    radial-gradient(circle at bottom right, #020203, transparent 55%),
-    var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  background: var(--background); /* dasar gelap polos, blob di pseudo */
   color: var(--text);
   height: 100%;
+}
+
+/* ========================= */
+/* ORANGE→RED ABSTRACT BG    */
+/* ========================= */
+
+/* class ini dipasang di <body> via layout.tsx */
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  background: #050308;
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Layer 1 – blob besar sangat blur */
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 5% 0%, #ffb980 0, #ff7a2a 32%, transparent 70%),
+    radial-gradient(circle at 95% 5%, #ffb37a 0, #ff5c1a 32%, transparent 70%),
+    radial-gradient(circle at 12% 80%, #ff7a2a 0, #ff3b08 32%, transparent 68%),
+    radial-gradient(circle at 88% 78%, #ff9550 0, #ff3b08 32%, transparent 70%),
+    radial-gradient(circle at 50% 40%, #1a0b05 0, #050308 45%, transparent 80%);
+  filter: blur(26px); /* super lembut */
+  opacity: 0.96;
+}
+
+/* Layer 2 – blob kecil lebih tajam (masih orange–red semua) */
+.app-shell::after {
+  content: "";
+  position: fixed;
+  inset: -5%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 22%, #ffcf9b 0, #ff8a3a 26%, transparent 60%),
+    radial-gradient(circle at 78% 18%, #ffc28d 0, #ff6f24 26%, transparent 60%),
+    radial-gradient(circle at 22% 68%, #ff9854 0, #ff4a10 26%, transparent 60%),
+    radial-gradient(circle at 72% 72%, #ffbf86 0, #ff5b1a 26%, transparent 60%),
+    radial-gradient(circle at 50% 88%, #ff8a3a 0, #ff3205 26%, transparent 65%);
+  opacity: 0.9;
 }
 
 /* ========================= */
@@ -49,13 +87,13 @@ body {
 .glass {
   background: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.85),
-    rgba(15, 23, 42, 0.6)
+    rgba(15, 23, 42, 0.8),
+    rgba(15, 23, 42, 0.52)
   );
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px) saturate(135%);
-  -webkit-backdrop-filter: blur(20px) saturate(135%);
+  backdrop-filter: blur(20px) saturate(145%);
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
   box-shadow:
     0 18px 45px rgba(0, 0, 0, 0.9),
     0 0 0 1px rgba(15, 23, 42, 0.8);
@@ -71,13 +109,13 @@ body {
     ),
     linear-gradient(
       135deg,
-      rgba(15, 23, 42, 0.92),
-      rgba(15, 23, 42, 0.65)
+      rgba(15, 23, 42, 0.86),
+      rgba(15, 23, 42, 0.52)
     );
   border-radius: 26px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(24px) saturate(145%);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(155%);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
   box-shadow:
     0 28px 70px rgba(0, 0, 0, 0.95),
     0 0 0 1px rgba(15, 23, 42, 0.9);
@@ -92,8 +130,8 @@ body {
   border-radius: inherit;
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.18),
-    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.06),
     transparent 55%
   );
   opacity: 0.6;
@@ -110,7 +148,7 @@ body {
   border-radius: inherit;
   background-image: radial-gradient(
     circle at 1px 1px,
-    rgba(255, 255, 255, 0.4) 1px,
+    rgba(255, 255, 255, 0.35) 1px,
     transparent 0
   );
   background-size: 4px 4px;
@@ -128,7 +166,6 @@ a {
 /* BUTTON STYLES             */
 /* ========================= */
 
-/* Default button – basic fallback */
 button {
   background-color: var(--accent);
   color: #ffffff;
