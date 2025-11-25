@@ -5,13 +5,13 @@
 
 /*
   Global styles for the CARGO Rewards portal.
-  This theme uses a dark glassmorphism aesthetic with a bold accent color.
+  Dark theme + glassmorphism khusus di card.
 */
 
 /* Colour palette and re-usable variables */
 :root {
   /* Base background colour */
-  --background: #0d121a;
+  --background: #020617; /* almost black navy */
   /* Card and sidebar surfaces use a semi-transparent layer to create a glass effect */
   --surface: rgba(255, 255, 255, 0.05);
   /* Borders are subtle and help separate surfaces */
@@ -29,16 +29,15 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
     Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
     sans-serif;
-  /* background dasar + glow halus */
-  background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 55%),
-    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.12), transparent 55%),
+  /* Dark gradient background – bukan glass, hanya base canvas */
+  background: radial-gradient(circle at top left, #111827, transparent 60%),
+    radial-gradient(circle at bottom right, #020617, transparent 55%),
     var(--background);
   color: var(--text);
   height: 100%;
 }
 
-/* Apply a stronger glassy effect to any element with the `.glass` class */
+/* Glassmorphism utama: dipakai di panel kecil (card, box, dsb) */
 .glass {
   background: linear-gradient(
     145deg,
@@ -71,6 +70,8 @@ a {
   text-decoration: none;
 }
 
+/* Default button – basic, supaya nggak ganggu halaman lain.
+   Style utama dipakai via .btn-primary / .btn-outline / .btn-ghost */
 button {
   background-color: var(--accent);
   color: #ffffff;
@@ -78,11 +79,72 @@ button {
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  font-family: inherit;
 }
 
 button:hover {
   background-color: #e03e00;
+  transform: translateY(-1px);
+}
+
+/* Tombol utama – dipakai di hero & CTA */
+.btn-primary {
+  background-image: linear-gradient(135deg, #ff6a00, #ff4600, #ff0066);
+  color: #f9fafb;
+  border-radius: 999px;
+  padding: 0.7rem 1.9rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: none;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.btn-primary:hover {
+  background-image: linear-gradient(135deg, #ff7a1a, #ff5722, #ff1f7a);
+  transform: translateY(-2px);
+}
+
+/* Tombol outline / secondary – look glassy tapi ringan */
+.btn-outline {
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.08),
+    rgba(15, 23, 42, 0.9)
+  );
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.65rem 1.7rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 70, 0, 0.9);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.65);
+}
+
+/* Tombol kecil / helper (untuk kalkulator dsb) */
+.btn-ghost {
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.5rem 1.3rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 0.4rem;
+}
+
+.btn-ghost:hover {
+  border-color: rgba(226, 232, 240, 0.9);
 }
 
 * {
@@ -96,7 +158,7 @@ html {
 
 /* Glassmorphism scrollbar untuk area yang pakai class .glass-scroll */
 .glass-scroll {
-  scrollbar-width: thin;                /* Firefox */
+  scrollbar-width: thin; /* Firefox */
   scrollbar-color: rgba(255, 70, 0, 0.65) rgba(15, 23, 42, 0.65);
 }
 
