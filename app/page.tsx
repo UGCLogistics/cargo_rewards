@@ -323,28 +323,31 @@ export default function HomePage() {
                     membantu menekan biaya pengiriman secara terukur.
                   </p>
 
+                  {/* HERO BUTTONS – conditional by login */}
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
                     {user ? (
                       <>
                         <Link href="/dashboard">
                           <button className="btn-primary">
-                            Buka Dashboard Rewards
+                            Buka Dashboard Saya
                           </button>
                         </Link>
-                        <a href="#simulasi" className="btn-outline">
-                          Lihat Simulasi Benefit
+                        <a href="#program">
+                          <button className="btn-outline">
+                            Pelajari lebih lanjut
+                          </button>
                         </a>
                       </>
                     ) : (
                       <>
-                        <Link href="/register">
+                        <a href="#program">
                           <button className="btn-primary">
-                            Daftar CARGO Rewards
+                            Pelajari lebih lanjut
                           </button>
-                        </Link>
+                        </a>
                         <Link href="/login">
                           <button className="btn-outline">
-                            Saya Sudah Punya Akun
+                            Saya sudah punya akun
                           </button>
                         </Link>
                       </>
@@ -354,8 +357,8 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* INTRO PROGRAM */}
-            <section className="space-y-8">
+            {/* INTRO PROGRAM – target "Pelajari lebih lanjut" */}
+            <section className="space-y-8" id="program">
               <div className="space-y-2 text-center">
                 <h2
                   className="text-2xl font-bold md:text-3xl"
@@ -996,23 +999,25 @@ export default function HomePage() {
                   <>
                     <Link href="/dashboard">
                       <button className="btn-primary">
-                        Lanjut ke Dashboard Rewards
+                        Buka Dashboard Saya
                       </button>
                     </Link>
-                    <a href="#simulasi" className="btn-outline">
-                      Lihat Simulasi untuk Perusahaan Anda
+                    <a href="#program">
+                      <button className="btn-outline">
+                        Pelajari lebih lanjut
+                      </button>
                     </a>
                   </>
                 ) : (
                   <>
                     <Link href="/register">
                       <button className="btn-primary">
-                        Mulai CARGO Rewards
+                        Registrasi C.A.R.G.O Rewards
                       </button>
                     </Link>
                     <Link href="/login">
                       <button className="btn-outline">
-                        Saya Sudah Punya Akun
+                        Saya sudah punya akun
                       </button>
                     </Link>
                   </>
