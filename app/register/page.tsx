@@ -131,7 +131,7 @@ export default function RegisterPage() {
         phone: form.phone || null,
         email: form.email,
         address: form.address || null,
-        salesname: null, // bisa diisi oleh admin / sales nanti
+        salesname: null,
       });
 
       if (customerError) {
@@ -156,14 +156,15 @@ export default function RegisterPage() {
   };
 
   return (
-    // PENTING: h-full + overflow-auto supaya bisa scroll di dalam layout yang overflow-hidden
-    <div className="h-full overflow-auto px-4 py-6">
-      <div className="mx-auto flex max-w-md items-start justify-center pb-10">
+    // h-full + overflow-auto supaya bisa scroll di dalam layout
+    <div className="h-full overflow-auto px-4">
+      {/* PADDING ATAS–BAWAH DI SINI */}
+      <div className="mx-auto flex max-w-md items-start justify-center py-10 md:py-16">
         <div className="relative w-full">
           {/* Glow halus di belakang card, warna senada accent */}
           <div className="pointer-events-none absolute -inset-x-10 -top-16 -bottom-10 -z-10 opacity-40 blur-3xl bg-[radial-gradient(circle_at_top,_rgba(255,70,0,0.7)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.9)_0,_transparent_60%)]" />
 
-          {/* CARD REGISTER – pakai glass-card biar senada dengan landing */}
+          {/* CARD REGISTER – pakai glass-card */}
           <div className="glass-card px-6 py-7 md:px-7 md:py-8">
             {/* Header logo */}
             <div className="mb-4 flex items-center justify-center">
