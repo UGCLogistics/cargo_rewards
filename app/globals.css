@@ -5,12 +5,12 @@
 
 /*
   Global styles for the CARGO Rewards portal.
-  Dark theme + glassmorphism halus di card.
+  Dark navy base + glassmorphism pada card, bukan background.
 */
 
 /* Colour palette and re-usable variables */
 :root {
-  --background: #050308; /* dark netral */
+  --background: #020617; /* dark navy utama */
   --surface: rgba(15, 23, 42, 0.7);
   --surface-soft: rgba(15, 23, 42, 0.5);
   --border: rgba(255, 255, 255, 0.12);
@@ -26,16 +26,50 @@ body {
     Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
     sans-serif;
 
-  /* BACKGROUND GLOBAL – ORANGE → RED BLOBS (cover semua page) */
-  background:
-    radial-gradient(circle at 5% 0%, #ffb980 0, #ff7a2a 32%, transparent 70%),
-    radial-gradient(circle at 95% 6%, #ffb37a 0, #ff5c1a 32%, transparent 70%),
-    radial-gradient(circle at 12% 80%, #ff7a2a 0, #ff3b08 32%, transparent 68%),
-    radial-gradient(circle at 88% 78%, #ff9550 0, #ff3b08 32%, transparent 70%),
-    radial-gradient(circle at 50% 40%, #120807 0, #050308 48%, #020206 100%);
-  background-color: #050308;
+  /* BASE DARK NAVY + ORANGE–RED ABSTRACT BLOBS */
+  background-color: #020617;
+
+  background-image:
+    /* blob kecil kiri atas */
+    radial-gradient(
+      circle at 6% 0%,
+      rgba(255, 120, 40, 0.45) 0,
+      rgba(255, 120, 40, 0.12) 18%,
+      transparent 55%
+    ),
+    /* blob kecil kanan atas */
+    radial-gradient(
+      circle at 94% 8%,
+      rgba(255, 90, 20, 0.38) 0,
+      rgba(255, 90, 20, 0.12) 20%,
+      transparent 55%
+    ),
+    /* blob bawah kiri */
+    radial-gradient(
+      circle at 14% 82%,
+      rgba(255, 90, 28, 0.32) 0,
+      rgba(255, 90, 28, 0.10) 18%,
+      transparent 55%
+    ),
+    /* blob bawah kanan */
+    radial-gradient(
+      circle at 88% 78%,
+      rgba(255, 120, 40, 0.35) 0,
+      rgba(255, 120, 40, 0.10) 22%,
+      transparent 60%
+    ),
+    /* lapisan navy tengah supaya tetap gelap */
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(15, 23, 42, 0.96) 0,
+      #020617 55%,
+      #020617 100%
+    );
+
+  background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
+
   color: var(--text);
   height: 100%;
 }
@@ -140,6 +174,7 @@ a {
 /* BUTTON STYLES             */
 /* ========================= */
 
+/* Fallback default button */
 button {
   background-color: var(--accent);
   color: #ffffff;
