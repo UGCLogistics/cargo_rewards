@@ -2,8 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function RewardsHeader() {
+  const pathname = usePathname();
+
+  // Hanya tampil di /dashboard dan semua sub-route-nya
+  const showHeader =
+    pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+
+  if (!showHeader) {
+    return null;
+  }
+
   return (
     // sticky full-width di paling atas
     <header className="sticky top-0 z-40">
