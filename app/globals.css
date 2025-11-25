@@ -152,6 +152,13 @@ body {
     0 0 0 1px rgba(15, 23, 42, 0.85);
 }
 
+/* Header glass bar – full width, tanpa rounded */
+.glass-header {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
 /* Highlight lembut di pinggir “kaca” */
 .glass::before,
 .glass-card::before {
