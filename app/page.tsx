@@ -203,11 +203,15 @@ export default function HomePage() {
         {/* background & warna sudah di-handle global CSS */}
         <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-6xl space-y-16 px-4 py-10">
-            {/* HERO – kartu kaca dengan blok gradient di belakang */}
+            {/* HERO – glass card + blob warna di belakang */}
             <section className="flex items-center justify-center">
               <div className="relative w-full max-w-5xl py-10">
-                {/* blok gradient di kiri belakang kartu */}
+                {/* Blob kiri */}
                 <div className="pointer-events-none absolute -left-4 top-1/2 h-56 w-56 -translate-y-1/2 rounded-3xl bg-gradient-to-tr from-orange-500 via-orange-400 to-pink-500 opacity-95" />
+                {/* Blob kanan atas */}
+                <div className="pointer-events-none absolute right-0 -top-6 h-40 w-40 rounded-full bg-gradient-to-tr from-purple-500 via-fuchsia-500 to-sky-400 opacity-80" />
+                {/* Blob kanan bawah */}
+                <div className="pointer-events-none absolute right-12 -bottom-10 h-44 w-44 rounded-[999px] bg-gradient-to-tr from-amber-300 via-orange-400 to-rose-500 opacity-70" />
 
                 {/* kartu kaca utama */}
                 <div className="glass-card relative mx-auto max-w-3xl px-8 py-10">
@@ -995,7 +999,9 @@ export default function HomePage() {
                 ) : (
                   <>
                     <Link href="/register">
-                      <button className="btn-primary">Mulai CARGO Rewards</button>
+                      <button className="btn-primary">
+                        Mulai CARGO Rewards
+                      </button>
                     </Link>
                     <Link href="/login">
                       <button className="btn-outline">
@@ -1009,6 +1015,8 @@ export default function HomePage() {
           </div>
         </main>
 
+        {/* FOOTER khusus landing page */}
+        <RewardsFooter />
       </div>
     </>
   );
