@@ -5,18 +5,6 @@ import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
 
-import type { LucideIcon } from "lucide-react";
-import {
-  PiggyBank,
-  Gift,
-  Building2,
-  Rocket,
-  Sparkles,
-  Repeat,
-  TrendingUp,
-  BarChart3,
-} from "lucide-react";
-
 type InitialRewardsResult = {
   helloDiscount: number;
   helloTier: string;
@@ -40,8 +28,6 @@ type PointsResult = {
 type FeatureCard = {
   title: string;
   desc: string;
-  icon?: LucideIcon;
-  iconPosition?: string;
 };
 
 type StepCard = {
@@ -49,8 +35,6 @@ type StepCard = {
   title: string;
   desc: string;
   points: string[];
-  icon: LucideIcon;
-  iconPosition: string;
 };
 
 export default function HomePage() {
@@ -208,14 +192,10 @@ export default function HomePage() {
     {
       title: "Hemat Biaya Pengiriman",
       desc: "Optimalkan biaya kirim cargo domestik dengan kombinasi harga kompetitif, diskon, dan cashback yang terukur.",
-      icon: PiggyBank,
-      iconPosition: "top-3 right-3",
     },
     {
       title: "Cashback & Loyalty Points",
       desc: "Setiap transaksi menghasilkan poin loyalty dan cashback yang bisa di-reinvest untuk pengiriman berikutnya.",
-      icon: Gift,
-      iconPosition: "top-3 left-3",
     },
     {
       title: "Partner Logistik Jangka Panjang",
@@ -224,8 +204,6 @@ export default function HomePage() {
     {
       title: "Siap Scale Up Nasional",
       desc: "Cocok untuk bisnis dengan cabang, warehouse, atau distribusi multi-kota di seluruh Indonesia.",
-      icon: Building2,
-      iconPosition: "bottom-3 right-3",
     },
   ];
 
@@ -239,8 +217,6 @@ export default function HomePage() {
         "10% untuk Rp 5 - 14,99 juta",
         "15% untuk ≥ Rp 15 juta",
       ],
-      icon: Sparkles,
-      iconPosition: "top-3 right-3",
     },
     {
       label: "Langkah 2",
@@ -250,16 +226,12 @@ export default function HomePage() {
         "5% untuk total Rp 20 - 49,99 juta",
         "7,5% untuk total ≥ Rp 50 juta",
       ],
-      icon: Repeat,
-      iconPosition: "top-3 left-3",
     },
     {
       label: "Langkah 3",
       title: "Retensi & Unlimited Points",
       desc: "Setiap Rp 10.000 pengiriman = 1 poin. 1 poin = Rp 250. Level Silver / Gold / Platinum mengalikan poin & bonus Anda.",
       points: [],
-      icon: TrendingUp,
-      iconPosition: "bottom-3 right-3",
     },
   ];
 
@@ -282,7 +254,7 @@ export default function HomePage() {
         image="/og-image.png"
       />
 
-      {/* Frame khusus landing: konten saja, tanpa footer global */}
+      {/* Frame khusus landing: konten saja */}
       <div className="flex h-full flex-col">
         <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-6xl space-y-16 px-4 py-10">
@@ -290,13 +262,6 @@ export default function HomePage() {
             <section className="flex items-center justify-center">
               <div className="relative w-full max-w-5xl py-10">
                 <div className="glass-card relative mx-auto max-w-3xl px-8 py-10">
-                  {/* icon kecil di hero, pojok kanan atas */}
-                  <div className="absolute right-6 top-6 z-[1]">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                      <Rocket className="h-4 w-4 text-[#ffdbb0]" />
-                    </div>
-                  </div>
-
                   <p
                     className="mb-4 text-xs uppercase tracking-[0.25em] text-center md:text-left"
                     style={{ color: "rgba(247,248,250,0.6)" }}
@@ -379,13 +344,7 @@ export default function HomePage() {
               <div className="grid gap-6 md:grid-cols-2">
                 {/* card kiri besar */}
                 <div className="glass space-y-4 p-6 md:p-7">
-                  {/* icon di kiri atas */}
-                  <div className="absolute left-5 top-5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                      <BarChart3 className="h-4 w-4 text-[#ffdbb0]" />
-                    </div>
-                  </div>
-                  <h3 className="pt-5 text-lg font-semibold md:text-xl">
+                  <h3 className="text-lg font-semibold md:text-xl">
                     Kenapa CARGO Rewards Relevan untuk Bisnis Anda?
                   </h3>
                   <p
@@ -411,39 +370,24 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* 4 card kecil, icon hanya di beberapa */}
+                {/* 4 card kecil */}
                 <div className="grid grid-cols-2 gap-4">
-                  {featureCards.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div
-                        key={item.title}
-                        className="glass space-y-1 p-4 pt-6"
+                  {featureCards.map((item) => (
+                    <div key={item.title} className="glass space-y-1 p-4">
+                      <h4
+                        className="text-sm font-semibold"
+                        style={{ color: "var(--accent)" }}
                       >
-                        {Icon && item.iconPosition && (
-                          <div
-                            className={`absolute ${item.iconPosition} z-[1]`}
-                          >
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                              <Icon className="h-4 w-4 text-[#ffebd1]" />
-                            </div>
-                          </div>
-                        )}
-                        <h4
-                          className="text-sm font-semibold pr-8"
-                          style={{ color: "var(--accent)" }}
-                        >
-                          {item.title}
-                        </h4>
-                        <p
-                          className="text-xs"
-                          style={{ color: "rgba(247,248,250,0.8)" }}
-                        >
-                          {item.desc}
-                        </p>
-                      </div>
-                    );
-                  })}
+                        {item.title}
+                      </h4>
+                      <p
+                        className="text-xs"
+                        style={{ color: "rgba(247,248,250,0.8)" }}
+                      >
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>
@@ -465,51 +409,40 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* 3 langkah ringkas, di sini ikon tetap dipakai */}
+              {/* 3 langkah ringkas */}
               <div className="grid gap-6 md:grid-cols-3">
-                {stepCards.map((step) => {
-                  const Icon = step.icon;
-                  return (
-                    <div key={step.label} className="glass space-y-2 p-5 pt-7">
-                      <div
-                        className={`absolute ${step.iconPosition} z-[1]`}
+                {stepCards.map((step) => (
+                  <div key={step.label} className="glass space-y-2 p-5">
+                    <p
+                      className="text-[11px] uppercase tracking-[0.2em]"
+                      style={{ color: "rgba(247,248,250,0.6)" }}
+                    >
+                      {step.label}
+                    </p>
+                    <h3
+                      className="text-sm font-semibold"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      {step.title}
+                    </h3>
+                    <p
+                      className="text-xs"
+                      style={{ color: "rgba(247,248,250,0.9)" }}
+                    >
+                      {step.desc}
+                    </p>
+                    {step.points.length > 0 && (
+                      <ul
+                        className="space-y-1 text-xs"
+                        style={{ color: "rgba(247,248,250,0.8)" }}
                       >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-white/10 backdrop-blur-md">
-                          <Icon className="h-4 w-4 text-[#ffecd5]" />
-                        </div>
-                      </div>
-
-                      <p
-                        className="text-[11px] uppercase tracking-[0.2em]"
-                        style={{ color: "rgba(247,248,250,0.6)" }}
-                      >
-                        {step.label}
-                      </p>
-                      <h3
-                        className="text-sm font-semibold"
-                        style={{ color: "var(--accent)" }}
-                      >
-                        {step.title}
-                      </h3>
-                      <p
-                        className="text-xs"
-                        style={{ color: "rgba(247,248,250,0.9)" }}
-                      >
-                        {step.desc}
-                      </p>
-                      {step.points.length > 0 && (
-                        <ul
-                          className="space-y-1 text-xs"
-                          style={{ color: "rgba(247,248,250,0.8)" }}
-                        >
-                          {step.points.map((pt) => (
-                            <li key={pt}>• {pt}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })}
+                        {step.points.map((pt) => (
+                          <li key={pt}>• {pt}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {/* Kalkulator Hello Discount + Active Cashback */}
