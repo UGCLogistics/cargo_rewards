@@ -5,7 +5,7 @@
 
 /*
   Global styles for the CARGO Rewards portal.
-  Dark theme + glassmorphism halus di card (bukan background).
+  Dark theme + glassmorphism halus di card.
 */
 
 /* Colour palette and re-usable variables */
@@ -22,55 +22,29 @@ html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  background: var(--background); /* dasar gelap polos, blob di pseudo */
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+    Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
+    sans-serif;
+
+  /* BACKGROUND GLOBAL – ORANGE → RED BLOBS (cover semua page) */
+  background:
+    radial-gradient(circle at 5% 0%, #ffb980 0, #ff7a2a 32%, transparent 70%),
+    radial-gradient(circle at 95% 6%, #ffb37a 0, #ff5c1a 32%, transparent 70%),
+    radial-gradient(circle at 12% 80%, #ff7a2a 0, #ff3b08 32%, transparent 68%),
+    radial-gradient(circle at 88% 78%, #ff9550 0, #ff3b08 32%, transparent 70%),
+    radial-gradient(circle at 50% 40%, #120807 0, #050308 48%, #020206 100%);
+  background-color: #050308;
+  background-attachment: fixed;
+  background-size: cover;
   color: var(--text);
   height: 100%;
 }
 
-/* ========================= */
-/* ORANGE→RED ABSTRACT BG    */
-/* ========================= */
-
-/* class ini dipasang di <body> via layout.tsx */
+/* body wrapper dari layout.tsx */
 .app-shell {
-  position: relative;
   min-height: 100vh;
-  background: #050308;
+  position: relative;
   color: var(--text);
-  overflow: hidden;
-}
-
-/* Layer 1 – blob besar sangat blur */
-.app-shell::before {
-  content: "";
-  position: fixed;
-  inset: -10%;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 5% 0%, #ffb980 0, #ff7a2a 32%, transparent 70%),
-    radial-gradient(circle at 95% 5%, #ffb37a 0, #ff5c1a 32%, transparent 70%),
-    radial-gradient(circle at 12% 80%, #ff7a2a 0, #ff3b08 32%, transparent 68%),
-    radial-gradient(circle at 88% 78%, #ff9550 0, #ff3b08 32%, transparent 70%),
-    radial-gradient(circle at 50% 40%, #1a0b05 0, #050308 45%, transparent 80%);
-  filter: blur(26px); /* super lembut */
-  opacity: 0.96;
-}
-
-/* Layer 2 – blob kecil lebih tajam (masih orange–red semua) */
-.app-shell::after {
-  content: "";
-  position: fixed;
-  inset: -5%;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 18% 22%, #ffcf9b 0, #ff8a3a 26%, transparent 60%),
-    radial-gradient(circle at 78% 18%, #ffc28d 0, #ff6f24 26%, transparent 60%),
-    radial-gradient(circle at 22% 68%, #ff9854 0, #ff4a10 26%, transparent 60%),
-    radial-gradient(circle at 72% 72%, #ffbf86 0, #ff5b1a 26%, transparent 60%),
-    radial-gradient(circle at 50% 88%, #ff8a3a 0, #ff3205 26%, transparent 65%);
-  opacity: 0.9;
 }
 
 /* ========================= */
