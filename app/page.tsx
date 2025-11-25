@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "../context/AuthContext";
 import SEO from "../components/SEO";
+import ugcLogo from "public/logougcorangewhite.png";
 
 type InitialRewardsResult = {
   helloDiscount: number;
@@ -36,6 +38,9 @@ type StepCard = {
   desc: string;
   points: string[];
 };
+
+const CARGO_REWARDS_LOGO =
+  "https://mhzymxqcfrmswjdydtbt.supabase.co/storage/v1/object/public/graphics/logo/logorewardswhiteorange.png";
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -258,18 +263,45 @@ export default function HomePage() {
       <div className="flex h-full flex-col">
         <main className="flex-1 overflow-auto">
           <div className="mx-auto max-w-6xl space-y-16 px-4 py-10">
-            {/* HERO – glass card, background blob global dari layout */}
+            {/* HERO – glass card, logo di dalam card */}
             <section className="flex items-center justify-center">
-              <div className="relative w-full max-w-5xl py-10">
-                <div className="glass-card relative mx-auto max-w-3xl px-8 py-10">
+              <div className="relative w-full max-w-5xl py-8 md:py-10">
+                <div className="glass-card relative mx-auto max-w-4xl px-6 py-8 md:px-10 md:py-10">
+                  {/* LOGO DI DALAM HERO CARD – CENTERED */}
+                  <div className="mb-6 flex flex-col items-center gap-3">
+                    {/* Logo CARGO Rewards (utama) */}
+                    <Image
+                      src={CARGO_REWARDS_LOGO}
+                      alt="CARGO Rewards"
+                      width={220}
+                      height={60}
+                      className="h-10 w-auto md:h-12"
+                      priority
+                    />
+
+                    {/* Powered by UGC Logistics */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-slate-400">
+                        Powered by
+                      </span>
+                      <Image
+                        src={ugcLogo}
+                        alt="UGC Logistics"
+                        width={120}
+                        height={36}
+                        className="h-6 w-auto md:h-7"
+                      />
+                    </div>
+                  </div>
+
                   <p
-                    className="mb-4 text-xs uppercase tracking-[0.25em] text-center md:text-left"
+                    className="mb-2 text-[10px] text-center uppercase tracking-[0.3em]"
                     style={{ color: "rgba(247,248,250,0.6)" }}
                   >
-                    UGC LOGISTICS • CARGO REWARDS PORTAL
+                    PROGRAM LOYALITAS LOGISTIK • CARGO REWARDS PORTAL
                   </p>
 
-                  <h1 className="mb-4 text-3xl font-extrabold leading-tight md:text-5xl">
+                  <h1 className="mb-4 text-center text-3xl font-extrabold leading-tight md:text-5xl">
                     Ubah Biaya Logistik Jadi{" "}
                     <span style={{ color: "var(--accent)" }}>
                       Aset yang Menghasilkan
@@ -278,19 +310,20 @@ export default function HomePage() {
                   </h1>
 
                   <p
-                    className="mb-8 max-w-2xl text-sm md:text-base"
+                    className="mx-auto mb-8 max-w-2xl text-center text-sm md:text-base"
                     style={{ color: "rgba(247,248,250,0.8)" }}
                   >
                     CARGO Rewards adalah{" "}
-                    <strong>program loyalitas logistik</strong> dari UGC
-                    Logistics untuk bisnis yang rutin menggunakan{" "}
-                    <strong>jasa pengiriman cargo</strong>. Setiap pengiriman
-                    barang Anda bisa kembali lagi dalam bentuk{" "}
+                    <strong>program loyalitas logistik</strong> dari{" "}
+                    <strong>UGC Logistics</strong> untuk bisnis yang rutin
+                    menggunakan{" "}
+                    <strong>jasa pengiriman cargo di Indonesia</strong>. Setiap
+                    pengiriman barang Anda kembali lagi dalam bentuk{" "}
                     <strong>diskon, cashback, dan poin loyalty</strong> yang
-                    membantu menekan <strong>biaya pengiriman</strong>.
+                    membantu menekan biaya pengiriman secara terukur.
                   </p>
 
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
                     {user ? (
                       <>
                         <Link href="/dashboard">
@@ -731,6 +764,214 @@ export default function HomePage() {
                     )}
                   </div>
                 </div>
+              </div>
+            </section>
+
+            {/* LINIMASA KEMITRAAN */}
+            <section className="space-y-8">
+              <div className="space-y-2 text-center">
+                <h2 className="text-2xl font-bold md:text-3xl">
+                  Linimasa Kemitraan CARGO Rewards
+                </h2>
+                <p
+                  className="text-sm"
+                  style={{ color: "rgba(247,248,250,0.8)" }}
+                >
+                  Gambaran perjalanan Anda bersama UGC Logistics dari sebelum
+                  go-live sampai fase pertumbuhan.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => togglePhase(1)}
+                  className="glass text-left text-xs md:text-sm p-4"
+                  style={{
+                    borderColor:
+                      activePhase === 1 ? "var(--accent)" : "var(--border)",
+                  }}
+                >
+                  <p
+                    className="text-[11px] uppercase tracking-[0.2em]"
+                    style={{ color: "rgba(247,248,250,0.6)" }}
+                  >
+                    Fase 1
+                  </p>
+                  <p
+                    className="font-semibold"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Persiapan
+                  </p>
+                  <p
+                    className="mt-1 text-xs"
+                    style={{ color: "rgba(247,248,250,0.8)" }}
+                  >
+                    Fondasi kemitraan disiapkan sebelum pengiriman pertama.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => togglePhase(2)}
+                  className="glass text-left text-xs md:text-sm p-4"
+                  style={{
+                    borderColor:
+                      activePhase === 2 ? "var(--accent)" : "var(--border)",
+                  }}
+                >
+                  <p
+                    className="text-[11px] uppercase tracking-[0.2em]"
+                    style={{ color: "rgba(247,248,250,0.6)" }}
+                  >
+                    Fase 2
+                  </p>
+                  <p
+                    className="font-semibold"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Aktivasi
+                  </p>
+                  <p
+                    className="mt-1 text-xs"
+                    style={{ color: "rgba(247,248,250,0.8)" }}
+                  >
+                    Periode awal pengiriman dengan monitoring dan validasi
+                    benefit.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => togglePhase(3)}
+                  className="glass text-left text-xs md:text-sm p-4"
+                  style={{
+                    borderColor:
+                      activePhase === 3 ? "var(--accent)" : "var(--border)",
+                  }}
+                >
+                  <p
+                    className="text-[11px] uppercase tracking-[0.2em]"
+                    style={{ color: "rgba(247,248,250,0.6)" }}
+                  >
+                    Fase 3
+                  </p>
+                  <p
+                    className="font-semibold"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Pertumbuhan
+                  </p>
+                  <p
+                    className="mt-1 text-xs"
+                    style={{ color: "rgba(247,248,250,0.8)" }}
+                  >
+                    Optimalisasi berkelanjutan dan eskalasi level & benefit.
+                  </p>
+                </button>
+              </div>
+
+              <div className="glass space-y-2 p-6 text-xs md:text-sm">
+                {activePhase === 1 && (
+                  <>
+                    <h3 className="font-semibold">
+                      Timeline Persiapan (sebelum bulan 1)
+                    </h3>
+                    <ul className="list-inside list-disc space-y-1">
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Transparansi program:
+                        </strong>{" "}
+                        mekanisme, syarat dan ketentuan dijelaskan di awal
+                        sehingga mudah dijelaskan ke internal Anda.
+                      </li>
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Pemetaan kebutuhan:
+                        </strong>{" "}
+                        profil pengiriman, rute, SLA dan risiko dikaji sebelum
+                        go-live.
+                      </li>
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Desain solusi:
+                        </strong>{" "}
+                        skema harga, moda layanan dan standar layanan disepakati
+                        bersama.
+                      </li>
+                    </ul>
+                  </>
+                )}
+
+                {activePhase === 2 && (
+                  <>
+                    <h3 className="font-semibold">
+                      Timeline Aktivasi (bulan 1 - 3)
+                    </h3>
+                    <ul className="list-inside list-disc space-y-1">
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Go-live pengiriman:
+                        </strong>{" "}
+                        pengiriman awal dimonitor secara ketat untuk memastikan
+                        eksekusi berjalan sesuai SLA.
+                      </li>
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Review berkala:
+                        </strong>{" "}
+                        laporan singkat performa dan issue logistik dibahas
+                        rutin.
+                      </li>
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Validasi benefit:
+                        </strong>{" "}
+                        diskon, cashback dan poin direkap sehingga terasa dampak
+                        finansialnya.
+                      </li>
+                    </ul>
+                  </>
+                )}
+
+                {activePhase === 3 && (
+                  <>
+                    <h3 className="font-semibold">
+                      Timeline Pertumbuhan (bulan 4 - 6 dan seterusnya)
+                    </h3>
+                    <ul className="list-inside list-disc space-y-1">
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Laporan kinerja:
+                        </strong>{" "}
+                        analisis volume, rute, SLA dan biaya untuk melihat
+                        peluang efisiensi.
+                      </li>
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Optimalisasi:
+                        </strong>{" "}
+                        perbaikan layout rute, konsolidasi pengiriman, atau
+                        penyesuaian moda.
+                      </li>
+                      <li>
+                        <strong style={{ color: "var(--accent)" }}>
+                          Eskalasi level:
+                        </strong>{" "}
+                        saat naik ke Gold/Platinum, benefit dan prioritas
+                        layanan juga meningkat.
+                      </li>
+                    </ul>
+                  </>
+                )}
+
+                {activePhase === null && (
+                  <p style={{ color: "rgba(247,248,250,0.8)" }}>
+                    Pilih salah satu fase di atas untuk melihat detail
+                    linimasa.
+                  </p>
+                )}
               </div>
             </section>
 
