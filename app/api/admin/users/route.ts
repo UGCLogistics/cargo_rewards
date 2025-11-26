@@ -27,6 +27,7 @@ function isAdminRole(roleHeader: string | null) {
 
 /* ------------------------------------------------------------------ */
 /* GET  → list semua user dari public.users (hanya ADMIN)             */
+/*      (tanpa kolom email, karena tidak ada di public.users)         */
 /* ------------------------------------------------------------------ */
 
 export async function GET(request: Request) {
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
     const { data, error } = await adminClient
       .from("users")
       .select(
-        "id, email, name, companyname, role, status, created_at, updated_at"
+        "id, name, companyname, role, status, created_at, updated_at"
       )
       .order("created_at", { ascending: false });
 
@@ -176,12 +177,10 @@ export async function PATCH(request: Request) {
     const newMeta = { ...currentMeta, ...metaUpdates };
 
     // 4. Update metadata di auth.users
-    const { error: updateMetaErr } = await adminClient.auth.admin.updateUserById(
-      id,
-      {
+    const { error: updateMetaErr } =
+      await adminClient.auth.admin.updateUserById(id, {
         user_metadata: newMeta,
-      }
-    );
+      });
 
     if (updateMetaErr) {
       console.warn("Failed to update user metadata:", updateMetaErr);
@@ -202,7 +201,8 @@ export async function PATCH(request: Request) {
         role: newRole,
         status: typeof status !== "undefined" ? status : null,
         name: typeof name !== "undefined" ? name : null,
-        companyname: typeof companyname !== "undefined" ? companyname : null,
+        companyname:
+          typeof companyname !== "undefined" ? companyname : null,
       },
       { status: 200 }
     );
@@ -219,92 +219,4 @@ export async function PATCH(request: Request) {
 /* POST: kirim email reset password ke user                           */
 /* body: { id }                                                       */
 /* Mekanisme:                                                         */
-/*   - ambil email dari public.users                                  */
-/*   - panggil supabase.auth.resetPasswordForEmail(email)             */
-/* ------------------------------------------------------------------ */
-
-export async function POST(request: Request) {
-  try {
-    const roleHeader = request.headers.get("x-role");
-    if (!isAdminRole(roleHeader)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const adminClient = getServiceClient();
-    const body = (await request.json()) as { id?: string };
-
-    const id = body.id;
-    if (!id) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
-    }
-
-    // Ambil email dari public.users
-    const { data: profile, error: profileErr } = await adminClient
-      .from("users")
-      .select("email, name")
-      .eq("id", id)
-      .single();
-
-    if (profileErr) {
-      console.error("Select email from public.users error:", profileErr);
-      return NextResponse.json(
-        {
-          error:
-            "Gagal mengambil email user dari tabel public.users. Pastikan kolom email ada dan terisi.",
-        },
-        { status: 500 }
-      );
-    }
-
-    if (!profile?.email) {
-      return NextResponse.json(
-        {
-          error:
-            "User tidak memiliki email di tabel public.users, tidak bisa mengirim reset password.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const email: string = profile.email;
-    const redirectTo = process.env.NEXT_PUBLIC_SUPABASE_RESET_REDIRECT_URL;
-
-    let resetError: any = null;
-
-    if (redirectTo) {
-      const { error } = await adminClient.auth.resetPasswordForEmail(email, {
-        redirectTo,
-      });
-      resetError = error;
-    } else {
-      const { error } = await adminClient.auth.resetPasswordForEmail(email);
-      resetError = error;
-    }
-
-    if (resetError) {
-      console.error("resetPasswordForEmail error:", resetError);
-      return NextResponse.json(
-        {
-          error:
-            resetError.message ||
-            "Gagal mengirim email reset password.",
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: `Link reset password telah dikirim ke ${email}.`,
-      },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    console.error("POST /api/admin/users unexpected error:", err);
-    return NextResponse.json(
-      { error: err?.message || "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+/*   - amb
