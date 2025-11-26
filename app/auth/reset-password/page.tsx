@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// SESUAIKAN path ini kalau kamu pakai alias "@/lib/supabaseClient"
+// SESUAIKAN kalau kamu pakai alias "@/lib/supabaseClient"
 import supabase from "../../../lib/supabaseClient";
 
 export default function ResetPasswordPage() {
@@ -17,28 +17,57 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Cek apakah link reset masih valid (user sudah auto-login via token Supabase)
+  // STEP 1: tukar ?code=... dari URL menjadi session Supabase
   useEffect(() => {
-    const checkUser = async () => {
+    const init = async () => {
       setLoadingUser(true);
       setError(null);
 
-      const { data, error } = await supabase.auth.getUser();
+      try {
+        // ambil kode dari query param
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
 
-      if (error || !data.user) {
-        console.error("Reset password: getUser error", error);
+        // kalau ada code, pakai PKCE → exchange ke session dulu
+        if (code) {
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            console.error("exchangeCodeForSession error:", exchangeError);
+            setUserValid(false);
+            setError(
+              "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+            );
+            setLoadingUser(false);
+            return;
+          }
+        }
+
+        // STEP 2: setelah exchange (atau implicit flow), cek user
+        const { data, error } = await supabase.auth.getUser();
+
+        if (error || !data.user) {
+          console.error("Reset password: getUser error", error);
+          setUserValid(false);
+          setError(
+            "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+          );
+        } else {
+          setUserValid(true);
+        }
+      } catch (err) {
+        console.error("Reset password init error:", err);
         setUserValid(false);
         setError(
-          "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+          "Terjadi kesalahan saat memproses link reset password. Silakan minta reset password lagi."
         );
-      } else {
-        setUserValid(true);
+      } finally {
+        setLoadingUser(false);
       }
-
-      setLoadingUser(false);
     };
 
-    checkUser();
+    init();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,7 +103,6 @@ export default function ResetPasswordPage() {
         "Password berhasil diubah. Silakan login kembali dengan password baru."
       );
 
-      // Optional: redirect ke halaman login setelah beberapa detik
       setTimeout(() => {
         router.push("/login");
       }, 2000);
@@ -103,7 +131,7 @@ export default function ResetPasswordPage() {
         {!loadingUser && !userValid && (
           <div className="mb-3 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
             {error ||
-              "Link reset password tidak valid atau sudah kedaluwarsa."}
+              "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."}
           </div>
         )}
 
@@ -121,9 +149,7 @@ export default function ResetPasswordPage() {
             )}
 
             <div className="space-y-1">
-              <label className="text-xs text-slate-300">
-                Password baru
-              </label>
+              <label className="text-xs text-slate-300">Password baru</label>
               <input
                 type="password"
                 value={password}
