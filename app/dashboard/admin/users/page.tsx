@@ -7,7 +7,6 @@ type Role = "ADMIN" | "MANAGER" | "STAFF" | "CUSTOMER";
 
 interface AdminUserRow {
   id: string;
-  email: string | null;
   name: string | null;
   companyname: string | null;
   role: Role;
@@ -29,22 +28,26 @@ export default function AdminUsersPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   const loadUsers = async () => {
-    if (!user) return; // pastikan udah login
+    if (!user) return;
 
     setLoading(true);
     setError(null);
     setMessage(null);
+
     try {
       const res = await fetch("/api/admin/users", {
         headers: {
-          "x-role": role, // ← kirim role ke backend
+          "x-role": role,
         },
       });
+
       const json = await res.json();
+
       if (!res.ok) {
         setError(json.error || "Gagal memuat data user.");
         return;
       }
+
       setUsers(json.data || []);
     } catch (err: any) {
       console.error(err);
@@ -90,12 +93,13 @@ export default function AdminUsersPage() {
     setSavingId(userRow.id);
     setError(null);
     setMessage(null);
+
     try {
       const res = await fetch("/api/admin/users", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "x-role": role, // ← kirim role ke backend
+          "x-role": role,
         },
         body: JSON.stringify({
           id: userRow.id,
@@ -121,7 +125,7 @@ export default function AdminUsersPage() {
         setMessage("Perubahan profil/role/status berhasil disimpan.");
       }
 
-      // opsional: refresh biar sync sama DB
+      // Kalau mau hard-sync dari DB lagi:
       // await loadUsers();
     } catch (err: any) {
       console.error(err);
@@ -172,7 +176,7 @@ export default function AdminUsersPage() {
           Hanya ADMIN yang boleh mengakses halaman ini. Perubahan di sini akan
           otomatis mengubah{" "}
           <span className="font-mono">public.users</span> dan{" "}
-          <span className="font-mono">auth.users.user_metadata.role</span>.
+          <span className="font-mono">auth.users.user_metadata</span>.
         </p>
 
         <div className="flex items-center gap-2 mb-3">
@@ -205,7 +209,7 @@ export default function AdminUsersPage() {
           <table className="min-w-full text-xs">
             <thead className="bg-slate-900/60">
               <tr className="text-left">
-                <th className="px-3 py-2">User</th>
+                <th className="px-3 py-2">Nama</th>
                 <th className="px-3 py-2">Perusahaan</th>
                 <th className="px-3 py-2">Role</th>
                 <th className="px-3 py-2">Status</th>
@@ -234,15 +238,10 @@ export default function AdminUsersPage() {
                     <input
                       type="text"
                       value={u.name ?? ""}
-                      onChange={(e) =>
-                        handleChangeName(u.id, e.target.value)
-                      }
+                      onChange={(e) => handleChangeName(u.id, e.target.value)}
                       placeholder="Nama lengkap"
                       className="mb-1 w-full rounded-lg border border-slate-700 bg-slate-900/70 px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
                     />
-                    <div className="text-[10px] text-slate-300">
-                      {u.email || "(tanpa email)"}
-                    </div>
                     <div className="text-[10px] text-slate-500 font-mono">
                       {u.id}
                     </div>
