@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-
-
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const ALLOWED_ROLES = ["ADMIN", "MANAGER", "STAFF", "CUSTOMER"] as const;
 type Role = (typeof ALLOWED_ROLES)[number];
@@ -43,7 +40,9 @@ export async function GET(request: Request) {
 
     const { data, error } = await adminClient
       .from("users")
-      .select("id, name, companyname, role, status, created_at, updated_at")
+      .select(
+        "id, email, name, companyname, role, status, created_at, updated_at"
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -62,12 +61,12 @@ export async function GET(request: Request) {
 }
 
 /* ------------------------------------------------------------------ */
-/* PATCH: ubah role + status                                          */
-/* body: { id, newRole, status? }                                     */
+/* PATCH: ubah nama, perusahaan, role, status                         */
+/* body: { id, name?, companyname?, newRole, status? }                */
 /* Sinkron ke:                                                        */
-/*   - public.users.role & public.users.status                        */
-/*   - auth.users.user_metadata.role                                  */
-/*   (opsional: update timestamp di public.customers)                  */
+/*   - public.users (name, companyname, role, status)                 */
+/*   - auth.users.user_metadata (role, name, companyname, status)     */
+/*   - sentuh updated_at di public.customers (kalau ada)              */
 /* ------------------------------------------------------------------ */
 
 export async function PATCH(request: Request) {
@@ -79,10 +78,15 @@ export async function PATCH(request: Request) {
 
     const adminClient = getServiceClient();
 
-    const body = await request.json();
-    const id: string | undefined = body.id;
-    const newRole: Role | undefined = body.newRole;
-    const status: string | undefined = body.status;
+    const body = (await request.json()) as {
+      id?: string;
+      newRole?: Role;
+      status?: string;
+      name?: string | null;
+      companyname?: string | null;
+    };
+
+    const { id, newRole, status, name, companyname } = body;
 
     if (!id || !newRole) {
       return NextResponse.json(
@@ -106,8 +110,15 @@ export async function PATCH(request: Request) {
       role: newRole,
       updated_at: new Date().toISOString(),
     };
-    if (typeof status === "string") {
+
+    if (typeof status !== "undefined") {
       updates.status = status;
+    }
+    if (typeof name !== "undefined") {
+      updates.name = name;
+    }
+    if (typeof companyname !== "undefined") {
+      updates.companyname = companyname;
     }
 
     const { error: updateProfileErr } = await adminClient
@@ -124,13 +135,12 @@ export async function PATCH(request: Request) {
     }
 
     // 2. (opsional) sentuh updated_at di public.customers kalau user_id cocok
-    //    ini hanya untuk sync timestamp, karena tabel customers tidak punya kolom role/status.
     await adminClient
       .from("customers")
       .update({ updated_at: new Date().toISOString() })
       .eq("user_id", id);
 
-    // 3. Ambil user di auth.users
+    // 3. Ambil user di auth.users untuk update metadata
     const { data: userData, error: getUserErr } =
       await adminClient.auth.admin.getUserById(id);
 
@@ -140,14 +150,30 @@ export async function PATCH(request: Request) {
         {
           success: true,
           warning:
-            "Role di public.users sudah berubah, tetapi gagal membaca user di auth.users untuk update metadata.",
+            "Data di public.users sudah berubah, tetapi gagal membaca user di auth.users untuk update metadata.",
         },
         { status: 200 }
       );
     }
 
     const currentMeta = userData.user.user_metadata || {};
-    const newMeta = { ...currentMeta, role: newRole };
+
+    // cuma overwrite field yang memang dikirim dari frontend
+    const metaUpdates: Record<string, any> = {
+      role: newRole,
+    };
+
+    if (typeof name !== "undefined") {
+      metaUpdates.name = name;
+    }
+    if (typeof companyname !== "undefined") {
+      metaUpdates.companyname = companyname;
+    }
+    if (typeof status !== "undefined") {
+      metaUpdates.status = status;
+    }
+
+    const newMeta = { ...currentMeta, ...metaUpdates };
 
     // 4. Update metadata di auth.users
     const { error: updateMetaErr } = await adminClient.auth.admin.updateUserById(
@@ -163,7 +189,7 @@ export async function PATCH(request: Request) {
         {
           success: true,
           warning:
-            "Role di public.users sudah diubah, tetapi update metadata di auth.users gagal. Silakan cek manual di Auth jika perlu.",
+            "Data di public.users sudah diubah, tetapi update metadata di auth.users gagal. Silakan cek manual di Auth jika perlu.",
         },
         { status: 200 }
       );
@@ -174,12 +200,108 @@ export async function PATCH(request: Request) {
         success: true,
         id,
         role: newRole,
-        status: status ?? null,
+        status: typeof status !== "undefined" ? status : null,
+        name: typeof name !== "undefined" ? name : null,
+        companyname: typeof companyname !== "undefined" ? companyname : null,
       },
       { status: 200 }
     );
   } catch (err: any) {
     console.error("PATCH /api/admin/users unexpected error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* POST: kirim email reset password ke user                           */
+/* body: { id }                                                       */
+/* Mekanisme:                                                         */
+/*   - ambil email dari public.users                                  */
+/*   - panggil supabase.auth.resetPasswordForEmail(email)             */
+/* ------------------------------------------------------------------ */
+
+export async function POST(request: Request) {
+  try {
+    const roleHeader = request.headers.get("x-role");
+    if (!isAdminRole(roleHeader)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const adminClient = getServiceClient();
+    const body = (await request.json()) as { id?: string };
+
+    const id = body.id;
+    if (!id) {
+      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    }
+
+    // Ambil email dari public.users
+    const { data: profile, error: profileErr } = await adminClient
+      .from("users")
+      .select("email, name")
+      .eq("id", id)
+      .single();
+
+    if (profileErr) {
+      console.error("Select email from public.users error:", profileErr);
+      return NextResponse.json(
+        {
+          error:
+            "Gagal mengambil email user dari tabel public.users. Pastikan kolom email ada dan terisi.",
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!profile?.email) {
+      return NextResponse.json(
+        {
+          error:
+            "User tidak memiliki email di tabel public.users, tidak bisa mengirim reset password.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const email: string = profile.email;
+    const redirectTo = process.env.NEXT_PUBLIC_SUPABASE_RESET_REDIRECT_URL;
+
+    let resetError: any = null;
+
+    if (redirectTo) {
+      const { error } = await adminClient.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+      resetError = error;
+    } else {
+      const { error } = await adminClient.auth.resetPasswordForEmail(email);
+      resetError = error;
+    }
+
+    if (resetError) {
+      console.error("resetPasswordForEmail error:", resetError);
+      return NextResponse.json(
+        {
+          error:
+            resetError.message ||
+            "Gagal mengirim email reset password.",
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: `Link reset password telah dikirim ke ${email}.`,
+      },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error("POST /api/admin/users unexpected error:", err);
     return NextResponse.json(
       { error: err?.message || "Internal server error" },
       { status: 500 }
