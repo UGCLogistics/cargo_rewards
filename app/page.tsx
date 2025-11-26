@@ -196,15 +196,15 @@ export default function HomePage() {
   const featureCards: FeatureCard[] = [
     {
       title: "Hemat Biaya Pengiriman",
-      desc: "Optimalkan biaya kirim cargo domestik dengan kombinasi harga kompetitif, diskon, dan cashback yang terukur.",
+      desc: "Optimalkan biaya pengiriman Anda dengan kombinasi harga kompetitif, diskon, dan cashback yang terukur.",
     },
     {
       title: "Cashback & Loyalty Points",
-      desc: "Setiap transaksi menghasilkan poin loyalty dan cashback yang bisa di-reinvest untuk pengiriman berikutnya.",
+      desc: "Setiap transaksi menghasilkan poin loyalty yang bisa ditukar dengan berbagai rewards.",
     },
     {
       title: "Partner Logistik Jangka Panjang",
-      desc: "Bukan sekadar vendor, tapi partner yang siap support ekspansi dan kebutuhan pengiriman harian Anda.",
+      desc: "UGC Logistics berkomitmen untuk menjadi partner yang siap mendukung ekspansi dan kebutuhan pengiriman harian Anda.",
     },
     {
       title: "Siap Scale Up Nasional",
@@ -234,7 +234,7 @@ export default function HomePage() {
     },
     {
       label: "Langkah 3",
-      title: "Retensi & Unlimited Points",
+      title: "Loyalty & Unlimited Points",
       desc: "Setiap Rp 10.000 pengiriman = 1 poin. 1 poin = Rp 250. Level Silver / Gold / Platinum mengalikan poin & bonus Anda.",
       points: [],
     },
@@ -243,8 +243,8 @@ export default function HomePage() {
   return (
     <>
       <SEO
-        title="Program Loyalitas Logistik & Pengiriman Cargo | CARGO Rewards"
-        description="CARGO Rewards adalah program loyalitas logistik dari UGC Logistics untuk bisnis yang rutin menggunakan jasa pengiriman cargo di seluruh Indonesia. Hemat biaya pengiriman dengan diskon, cashback, dan poin loyalty di setiap transaksi."
+        title="Program Loyalitas Pelanggan & Pengiriman Cargo | CARGO Rewards"
+        description="CARGO Rewards adalah program loyalitas pelanggan dari UGC Logistics untuk bisnis yang membutuhkan jasa pengiriman cargo di seluruh Indonesia. Hemat biaya pengiriman dengan diskon, cashback, dan poin loyalty di setiap transaksi."
         keywords={[
           "program loyalitas logistik",
           "jasa pengiriman cargo",
@@ -255,7 +255,7 @@ export default function HomePage() {
           "UGC Logistics",
           "rewards cargo",
         ]}
-        url="https://ugc-logistics-rewards.com"
+        url="https://utamaglobalindocargo.com/rewards"
         image="/og-image.png"
       />
 
@@ -298,13 +298,13 @@ export default function HomePage() {
                     className="mb-2 text-[10px] text-center uppercase tracking-[0.3em]"
                     style={{ color: "rgba(247,248,250,0.6)" }}
                   >
-                    PROGRAM LOYALITAS LOGISTIK • CARGO REWARDS PORTAL
+                    PROGRAM LOYALITAS PELANGGAN • UGC Logistics
                   </p>
 
                   <h1 className="mb-4 text-center text-3xl font-extrabold leading-tight md:text-5xl">
-                    Ubah Biaya Logistik Jadi{" "}
+                    Ubah Biaya Logistik Anda jadi{" "}
                     <span style={{ color: "var(--accent)" }}>
-                      Aset yang Menghasilkan
+                      Sumber Pendapatan Tambahan yang Menguntungkan
                     </span>
                     .
                   </h1>
@@ -314,11 +314,11 @@ export default function HomePage() {
                     style={{ color: "rgba(247,248,250,0.8)" }}
                   >
                     CARGO Rewards adalah{" "}
-                    <strong>program loyalitas logistik</strong> dari{" "}
+                    <strong>program loyalitas pelanggan</strong> dari{" "}
                     <strong>UGC Logistics</strong> untuk bisnis yang rutin
                     menggunakan{" "}
                     <strong>jasa pengiriman cargo di Indonesia</strong>. Setiap
-                    pengiriman barang Anda kembali lagi dalam bentuk{" "}
+                    biaya pengiriman barang Anda kembali lagi dalam bentuk{" "}
                     <strong>diskon, cashback, dan poin loyalty</strong> yang
                     membantu menekan biaya pengiriman secara terukur.
                   </p>
@@ -364,15 +364,15 @@ export default function HomePage() {
                   className="text-2xl font-bold md:text-3xl"
                   style={{ color: "var(--accent)" }}
                 >
-                  Program Loyalitas Logistik untuk Bisnis yang Serius Bertumbuh
+                  Program Loyalitas pelanggan untuk Bisnis yang membutuhkan efisiensi biaya logistik
                 </h2>
                 <p
                   className="text-xs md:text-sm"
                   style={{ color: "rgba(247,248,250,0.7)" }}
                 >
                   Dirancang untuk perusahaan yang rutin melakukan{" "}
-                  <strong>pengiriman cargo</strong>, butuh partner logistik yang
-                  bukan cuma kirim barang, tapi juga bantu{" "}
+                  <strong>pengiriman barang</strong>, dan membutuhkan partner logistik yang
+                  bukan cuma murah, tapi juga bantu{" "}
                   <strong>optimasi cost dan cashflow</strong>.
                 </p>
               </div>
@@ -381,7 +381,7 @@ export default function HomePage() {
                 {/* card kiri besar */}
                 <div className="glass space-y-4 p-6 md:p-7">
                   <h3 className="text-lg font-semibold md:text-xl">
-                    Kenapa CARGO Rewards Relevan untuk Bisnis Anda?
+                    Kenapa CARGO Rewards Cocok untuk Bisnis Anda?
                   </h3>
                   <p
                     className="text-sm"
@@ -391,7 +391,7 @@ export default function HomePage() {
                     <strong>biaya logistik</strong> jadi salah satu komponen
                     terbesar di struktur biaya. Harga murah saja tidak cukup,
                     Anda perlu <strong>struktur benefit</strong> yang jelas,
-                    terukur, dan bisa di-present ke manajemen.
+                    terukur, dan menguntungkan.
                   </p>
                   <p
                     className="text-sm"
@@ -399,10 +399,10 @@ export default function HomePage() {
                   >
                     Dengan CARGO Rewards, setiap pengiriman melalui{" "}
                     <strong>UGC Logistics</strong> akan tercatat sebagai{" "}
-                    <strong>nilai balik</strong> dalam bentuk diskon, cashback,
+                    <strong>sumber rewards</strong> dalam bentuk diskon, cashback,
                     dan poin. Semua bisa Anda monitor dari dashboard, sehingga{" "}
-                    <strong>ROI aktivitas logistik</strong> lebih mudah
-                    dijelaskan.
+                    <strong> lebih transparan dan </strong> lebih mudah
+                    dikontrol.
                   </p>
                 </div>
 
@@ -432,16 +432,16 @@ export default function HomePage() {
             <section className="space-y-10" id="simulasi">
               <div className="space-y-2 text-center">
                 <h2 className="text-2xl font-bold md:text-3xl">
-                  3 Langkah Simple Maksimalkan Loyalty Rewards Logistik
+                  3 Langkah Maksimalkan Loyalty & Rewards Program 
                 </h2>
                 <p
                   className="text-sm"
                   style={{ color: "rgba(247,248,250,0.8)" }}
                 >
-                  Mulai dari <strong>diskon sambutan</strong>,{" "}
+                  Mulai dari <strong>Hello Discount</strong>,{" "}
                   <strong>cashback 3 bulan pertama</strong>, sampai{" "}
-                  <strong>poin berulang</strong> untuk setiap pengiriman cargo
-                  bisnis Anda.
+                  <strong>unlimited point</strong> untuk setiap pengiriman barang
+                  yang Anda lakukan.
                 </p>
               </div>
 
@@ -774,14 +774,14 @@ export default function HomePage() {
             <section className="space-y-8">
               <div className="space-y-2 text-center">
                 <h2 className="text-2xl font-bold md:text-3xl">
-                  Linimasa Kemitraan CARGO Rewards
+                  Partnerships Timeline CARGO Rewards
                 </h2>
                 <p
                   className="text-sm"
                   style={{ color: "rgba(247,248,250,0.8)" }}
                 >
-                  Gambaran perjalanan Anda bersama UGC Logistics dari sebelum
-                  go-live sampai fase pertumbuhan.
+                  Gambaran perjalanan Anda bersama UGC Logistics dari awal 
+                  sampai fase pertumbuhan.
                 </p>
               </div>
 
@@ -887,7 +887,7 @@ export default function HomePage() {
                           Transparansi program:
                         </strong>{" "}
                         mekanisme, syarat dan ketentuan dijelaskan di awal
-                        sehingga mudah dijelaskan ke internal Anda.
+                        sehingga mudah Anda pahami.
                       </li>
                       <li>
                         <strong style={{ color: "var(--accent)" }}>
@@ -971,8 +971,7 @@ export default function HomePage() {
 
                 {activePhase === null && (
                   <p style={{ color: "rgba(247,248,250,0.8)" }}>
-                    Pilih salah satu fase di atas untuk melihat detail
-                    linimasa.
+                    Pilih salah satu fase di atas untuk melihat detail.
                   </p>
                 )}
               </div>
@@ -981,15 +980,15 @@ export default function HomePage() {
             {/* CTA AKHIR */}
             <section className="space-y-4 text-center">
               <h2 className="text-2xl font-bold md:text-3xl">
-                Siap Hemat Biaya Pengiriman &amp; Maksimalkan Setiap Pengiriman
-                Cargo?
+                Siap menghemat Biaya Pengiriman Barang Anda &amp; Maksimalkan Setiap Keuntungan
+                yang akan Anda Dapatkan?
               </h2>
               <p
                 className="mx-auto max-w-xl text-sm md:text-base"
                 style={{ color: "rgba(247,248,250,0.8)" }}
               >
                 Bergabunglah dengan{" "}
-                <strong>program loyalitas logistik CARGO Rewards</strong> dan
+                <strong>C.A.R.G.O Rewards</strong> dan
                 ubah biaya pengiriman menjadi{" "}
                 <strong>diskon, cashback, dan poin loyalty</strong> yang bisa
                 membantu bisnis Anda tumbuh lebih sehat dan terukur.
