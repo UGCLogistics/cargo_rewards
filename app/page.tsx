@@ -273,8 +273,8 @@ export default function HomePage() {
                     <Image
                       src={CARGO_REWARDS_LOGO}
                       alt="CARGO Rewards"
-                      width={220}
-                      height={60}
+                      width={440}
+                      height={120}
                       className="h-10 w-auto md:h-12"
                       priority
                     />
