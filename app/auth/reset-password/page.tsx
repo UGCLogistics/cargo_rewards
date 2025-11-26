@@ -97,7 +97,6 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // UI
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/60 shadow-[0_24px_80px_rgba(0,0,0,0.85)] backdrop-blur-xl p-6">
@@ -106,7 +105,6 @@ export default function ResetPasswordPage() {
           Silakan buat password baru untuk akun CARGO Rewards Anda.
         </p>
 
-        {/* Status verifikasi link */}
         {verifying && (
           <div className="mb-4 rounded-xl border border-slate-700/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-300">
             Memverifikasi link reset password…
@@ -119,7 +117,6 @@ export default function ResetPasswordPage() {
           </div>
         )}
 
-        {/* Form hanya tampil kalau link valid */}
         {!verifying && !linkError && (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
