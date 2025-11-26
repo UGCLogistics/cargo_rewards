@@ -14,7 +14,18 @@ interface CustomerRow {
   address: string | null;
   salesname: string | null;
   created_at: string;
+  // optional: kalau di-select juga, bisa ditambah
+  // updated_at?: string | null;
+  // first_transaction_date?: string | null;
+  // company_code?: string | null;
 }
+
+type EditPicState = {
+  id: number;
+  pic_name: string;
+  phone: string;
+  email: string;
+} | null;
 
 export default function AdminCustomersPage() {
   const { user } = useAuth();
@@ -36,6 +47,9 @@ export default function AdminCustomersPage() {
     address: "",
     salesname: "",
   });
+
+  // NEW: state untuk edit PIC
+  const [editingPic, setEditingPic] = useState<EditPicState>(null);
 
   const fetchCustomers = async () => {
     if (!user) return;
@@ -120,6 +134,61 @@ export default function AdminCustomersPage() {
     }
   };
 
+  // NEW: mulai edit PIC untuk 1 customer
+  const startEditPic = (c: CustomerRow) => {
+    setEditingPic({
+      id: c.id,
+      pic_name: c.pic_name || "",
+      phone: c.phone || "",
+      email: c.email || "",
+    });
+  };
+
+  // NEW: submit perubahan PIC (ke API PATCH)
+  const handleUpdatePic = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPic || !user) return;
+
+    if (!editingPic.pic_name.trim()) {
+      alert("Nama PIC tidak boleh kosong");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/customers", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-role": role,
+        },
+        body: JSON.stringify({
+          customer_id: editingPic.id,
+          pic_name: editingPic.pic_name.trim(),
+          phone: editingPic.phone.trim() || null,
+          email: editingPic.email.trim() || null,
+        }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+      let json: any = null;
+      if (contentType.includes("application/json")) {
+        json = await res.json();
+      }
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Gagal mengubah data PIC");
+      }
+
+      setEditingPic(null);
+      await fetchCustomers();
+    } catch (err: any) {
+      alert(err?.message || "Terjadi kesalahan saat mengubah data PIC");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -148,47 +217,135 @@ export default function AdminCustomersPage() {
         {loading ? (
           <p className="text-sm text-slate-400">Memuat data pelanggan…</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-xs text-slate-200">
-              <thead>
-                <tr className="border-b border-white/10 text-[11px] text-slate-400">
-                  <th className="px-3 py-2 text-left">ID</th>
-                  <th className="px-3 py-2 text-left">Perusahaan</th>
-                  <th className="px-3 py-2 text-left">PIC</th>
-                  <th className="px-3 py-2 text-left">Telepon</th>
-                  <th className="px-3 py-2 text-left">Email</th>
-                  <th className="px-3 py-2 text-left">Sales</th>
-                </tr>
-              </thead>
-              <tbody>
-                {customers.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-3 py-4 text-center text-slate-400"
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs text-slate-200">
+                <thead>
+                  <tr className="border-b border-white/10 text-[11px] text-slate-400">
+                    <th className="px-3 py-2 text-left">ID</th>
+                    <th className="px-3 py-2 text-left">Perusahaan</th>
+                    <th className="px-3 py-2 text-left">PIC</th>
+                    <th className="px-3 py-2 text-left">Telepon</th>
+                    <th className="px-3 py-2 text-left">Email</th>
+                    <th className="px-3 py-2 text-left">Sales</th>
+                    <th className="px-3 py-2 text-left">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="px-3 py-4 text-center text-slate-400"
+                      >
+                        Belum ada pelanggan terdaftar
+                      </td>
+                    </tr>
+                  )}
+                  {customers.map((c) => (
+                    <tr
+                      key={c.id}
+                      className="border-b border-white/5 hover:bg-white/5"
                     >
-                      Belum ada pelanggan terdaftar
-                    </td>
-                  </tr>
-                )}
-                {customers.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="border-b border-white/5 hover:bg-white/5"
+                      <td className="px-3 py-2 text-[11px] text-slate-400">
+                        {c.id}
+                      </td>
+                      <td className="px-3 py-2">{c.company_name}</td>
+                      <td className="px-3 py-2">{c.pic_name || "-"}</td>
+                      <td className="px-3 py-2">{c.phone || "-"}</td>
+                      <td className="px-3 py-2">{c.email || "-"}</td>
+                      <td className="px-3 py-2">{c.salesname || "-"}</td>
+                      <td className="px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => startEditPic(c)}
+                          className="text-[11px] text-amber-300 hover:text-[#ff4600] underline"
+                        >
+                          Ubah PIC
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Form edit PIC */}
+            {editingPic && (
+              <form
+                onSubmit={handleUpdatePic}
+                className="mt-4 grid gap-3 md:grid-cols-4 items-end border-t border-white/10 pt-4"
+              >
+                <div className="md:col-span-4 text-[11px] text-slate-400 mb-1">
+                  Ubah data PIC untuk customer ID{" "}
+                  <span className="font-semibold text-white">
+                    {editingPic.id}
+                  </span>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Nama PIC"
+                  value={editingPic.pic_name}
+                  onChange={(e) =>
+                    setEditingPic((prev) =>
+                      prev ? { ...prev, pic_name: e.target.value } : prev
+                    )
+                  }
+                  className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                             text-xs md:text-sm text-white placeholder:text-slate-500
+                             focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Telepon PIC"
+                  value={editingPic.phone}
+                  onChange={(e) =>
+                    setEditingPic((prev) =>
+                      prev ? { ...prev, phone: e.target.value } : prev
+                    )
+                  }
+                  className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                             text-xs md:text-sm text-white placeholder:text-slate-500
+                             focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+                />
+                <input
+                  type="email"
+                  placeholder="Email PIC"
+                  value={editingPic.email}
+                  onChange={(e) =>
+                    setEditingPic((prev) =>
+                      prev ? { ...prev, email: e.target.value } : prev
+                    )
+                  }
+                  className="w-full rounded-md bg-black/40 border border-white/10 px-3 py-2
+                             text-xs md:text-sm text-white placeholder:text-slate-500
+                             focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+                />
+
+                <div className="md:col-span-4 flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setEditingPic(null)}
+                    className="rounded-lg border border-white/20 px-4 py-2 text-xs md:text-sm text-slate-200 hover:bg-white/10"
+                    disabled={saving}
                   >
-                    <td className="px-3 py-2 text-[11px] text-slate-400">
-                      {c.id}
-                    </td>
-                    <td className="px-3 py-2">{c.company_name}</td>
-                    <td className="px-3 py-2">{c.pic_name || "-"}</td>
-                    <td className="px-3 py-2">{c.phone || "-"}</td>
-                    <td className="px-3 py-2">{c.email || "-"}</td>
-                    <td className="px-3 py-2">{c.salesname || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="rounded-lg bg-[#ff4600] hover:bg-[#ff5f24]
+                               text-white text-xs md:text-sm font-semibold px-6 py-2
+                               disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {saving ? "Menyimpan…" : "Simpan Perubahan"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
         )}
       </section>
 
