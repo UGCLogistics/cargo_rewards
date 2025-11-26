@@ -1,12 +1,12 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+// SESUAIKAN kalau kamu pakai alias "@/lib/supabaseClient"
 import supabase from "../../../lib/supabaseClient";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [verifying, setVerifying] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -17,47 +17,56 @@ export default function ResetPasswordPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Verifikasi token dari URL (token_hash)
+  // Verifikasi token dari URL (pakai window.location, TANPA useSearchParams)
   useEffect(() => {
     const verify = async () => {
       setVerifying(true);
       setLinkError(null);
 
-      const tokenHash = searchParams.get("token_hash");
-      const type = (searchParams.get("type") || "recovery") as
-        | "recovery"
-        | "email"
-        | "invite"
-        | "email_change";
+      try {
+        const url = new URL(window.location.href);
+        const tokenHash = url.searchParams.get("token_hash");
+        const type = (url.searchParams.get("type") || "recovery") as
+          | "recovery"
+          | "email"
+          | "invite"
+          | "email_change";
 
-      if (!tokenHash) {
+        if (!tokenHash) {
+          setLinkError(
+            "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+          );
+          setVerifying(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        });
+
+        if (error) {
+          console.error("verifyOtp error:", error);
+          setLinkError(
+            "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+          );
+          setVerifying(false);
+          return;
+        }
+
+        // kalau sukses, session supabase sudah aktif
+        setVerifying(false);
+      } catch (err) {
+        console.error("Error memproses URL reset password:", err);
         setLinkError(
-          "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+          "Terjadi kesalahan saat memproses link reset password. Silakan minta link baru."
         );
         setVerifying(false);
-        return;
       }
-
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type,
-      });
-
-      if (error) {
-        console.error("verifyOtp error:", error);
-        setLinkError(
-          "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
-        );
-        setVerifying(false);
-        return;
-      }
-
-      // Jika sukses, session Supabase sudah aktif di browser
-      setVerifying(false);
     };
 
     verify();
-  }, [searchParams]);
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -85,7 +94,7 @@ export default function ResetPasswordPage() {
 
       setSuccess(true);
 
-      // Setelah berhasil, arahkan kembali ke halaman login
+      // Redirect ke login setelah beberapa detik
       setTimeout(() => {
         router.push("/login");
       }, 2500);
@@ -105,6 +114,7 @@ export default function ResetPasswordPage() {
           Silakan buat password baru untuk akun CARGO Rewards Anda.
         </p>
 
+        {/* Status verifikasi link */}
         {verifying && (
           <div className="mb-4 rounded-xl border border-slate-700/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-300">
             Memverifikasi link reset password…
@@ -117,6 +127,7 @@ export default function ResetPasswordPage() {
           </div>
         )}
 
+        {/* Form hanya tampil kalau link valid */}
         {!verifying && !linkError && (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
