@@ -267,7 +267,7 @@ export async function GET(request: Request) {
         const diffMs = endDateObj.getTime() - last.getTime();
         const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-        if (diffDays < 15) activity_status = "ACTIVE";
+        if (diffDays <= 14) activity_status = "ACTIVE";
         else if (diffDays <= 30) activity_status = "PASSIVE";
         else if (diffDays <= 45) activity_status = "RISK";
         else activity_status = "DORMANT";
