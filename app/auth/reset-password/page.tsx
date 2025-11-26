@@ -1,181 +1,169 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-// SESUAIKAN kalau kamu pakai alias "@/lib/supabaseClient"
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import supabase from "../../../lib/supabaseClient";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [userValid, setUserValid] = useState(false);
+  const [verifying, setVerifying] = useState(true);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   const [password, setPassword] = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  // STEP 1: tukar ?code=... dari URL menjadi session Supabase
+  // Verifikasi token dari URL (token_hash)
   useEffect(() => {
-    const init = async () => {
-      setLoadingUser(true);
-      setError(null);
+    const verify = async () => {
+      setVerifying(true);
+      setLinkError(null);
 
-      try {
-        // ambil kode dari query param
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
+      const tokenHash = searchParams.get("token_hash");
+      const type = (searchParams.get("type") || "recovery") as
+        | "recovery"
+        | "email"
+        | "invite"
+        | "email_change";
 
-        // kalau ada code, pakai PKCE → exchange ke session dulu
-        if (code) {
-          const { error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code);
-
-          if (exchangeError) {
-            console.error("exchangeCodeForSession error:", exchangeError);
-            setUserValid(false);
-            setError(
-              "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
-            );
-            setLoadingUser(false);
-            return;
-          }
-        }
-
-        // STEP 2: setelah exchange (atau implicit flow), cek user
-        const { data, error } = await supabase.auth.getUser();
-
-        if (error || !data.user) {
-          console.error("Reset password: getUser error", error);
-          setUserValid(false);
-          setError(
-            "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
-          );
-        } else {
-          setUserValid(true);
-        }
-      } catch (err) {
-        console.error("Reset password init error:", err);
-        setUserValid(false);
-        setError(
-          "Terjadi kesalahan saat memproses link reset password. Silakan minta reset password lagi."
+      if (!tokenHash) {
+        setLinkError(
+          "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
         );
-      } finally {
-        setLoadingUser(false);
+        setVerifying(false);
+        return;
       }
+
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type,
+      });
+
+      if (error) {
+        console.error("verifyOtp error:", error);
+        setLinkError(
+          "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."
+        );
+        setVerifying(false);
+        return;
+      }
+
+      // Jika sukses, session Supabase sudah aktif di browser
+      setVerifying(false);
     };
 
-    init();
-  }, []);
+    verify();
+  }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!userValid) return;
-
-    setError(null);
-    setMessage(null);
+    setFormError(null);
 
     if (!password || password.length < 8) {
-      setError("Password minimal 8 karakter.");
+      setFormError("Password minimal 8 karakter.");
       return;
     }
 
-    if (password !== passwordConfirm) {
-      setError("Konfirmasi password tidak sama.");
+    if (password !== confirmPassword) {
+      setFormError("Konfirmasi password tidak sama.");
       return;
     }
 
     setSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
+      const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
         console.error("updateUser error:", error);
-        setError(error.message || "Gagal mengganti password.");
+        setFormError(error.message || "Gagal mengubah password.");
         return;
       }
 
-      setMessage(
-        "Password berhasil diubah. Silakan login kembali dengan password baru."
-      );
+      setSuccess(true);
 
+      // Setelah berhasil, arahkan kembali ke halaman login
       setTimeout(() => {
         router.push("/login");
-      }, 2000);
-    } catch (err) {
+      }, 2500);
+    } catch (err: any) {
       console.error(err);
-      setError("Terjadi kesalahan saat mengganti password.");
+      setFormError("Terjadi kesalahan saat mengubah password.");
     } finally {
       setSaving(false);
     }
   };
 
+  // UI
   return (
-    <div className="min-h-screen bg-[#050816] text-slate-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/70 p-6 shadow-[0_25px_60px_rgba(0,0,0,0.75)]">
-        <h1 className="text-xl font-semibold mb-2">Reset Password</h1>
+    <div className="min-h-screen bg-[#020617] text-slate-100 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/60 shadow-[0_24px_80px_rgba(0,0,0,0.85)] backdrop-blur-xl p-6">
+        <h1 className="text-xl font-semibold mb-1">Reset Password</h1>
         <p className="text-xs text-slate-400 mb-4">
           Silakan buat password baru untuk akun CARGO Rewards Anda.
         </p>
 
-        {loadingUser && (
-          <div className="text-xs text-slate-300 mb-2">
-            Memvalidasi link reset password…
+        {/* Status verifikasi link */}
+        {verifying && (
+          <div className="mb-4 rounded-xl border border-slate-700/60 bg-slate-800/70 px-3 py-2 text-xs text-slate-300">
+            Memverifikasi link reset password…
           </div>
         )}
 
-        {!loadingUser && !userValid && (
-          <div className="mb-3 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-            {error ||
-              "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta reset password lagi."}
+        {linkError && !verifying && (
+          <div className="mb-4 rounded-xl border border-red-500/50 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            {linkError}
           </div>
         )}
 
-        {!loadingUser && userValid && (
+        {/* Form hanya tampil kalau link valid */}
+        {!verifying && !linkError && (
           <form onSubmit={handleSubmit} className="space-y-3">
-            {error && (
-              <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                {error}
-              </div>
-            )}
-            {message && (
-              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
-                {message}
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <label className="text-xs text-slate-300">Password baru</label>
+            <div>
+              <label className="block text-xs font-medium mb-1">
+                Password Baru
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
                 placeholder="Minimal 8 karakter"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-slate-300">
-                Konfirmasi password baru
+            <div>
+              <label className="block text-xs font-medium mb-1">
+                Konfirmasi Password Baru
               </label>
               <input
                 type="password"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#ff4600]"
                 placeholder="Ulangi password baru"
               />
             </div>
 
+            {formError && (
+              <div className="rounded-xl border border-red-500/50 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                {formError}
+              </div>
+            )}
+
+            {success && (
+              <div className="rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+                Password berhasil diubah. Anda akan diarahkan ke halaman login…
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={saving}
-              className="mt-2 w-full rounded-lg bg-[#ff4600] px-4 py-2 text-xs font-semibold hover:bg-[#ff5f24] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mt-1 w-full rounded-lg bg-[#ff4600] px-3 py-2 text-sm font-semibold hover:bg-[#ff5f24] disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_10px_35px_rgba(255,70,0,0.45)]"
             >
               {saving ? "Menyimpan…" : "Simpan Password Baru"}
             </button>
