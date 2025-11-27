@@ -780,10 +780,10 @@ export default function AdminInternalKpiPage() {
                   {passiveCustomers.toLocaleString("id-ID")}
                 </span>
               </div>
-              <div className="glass rounded-xl px-3 py-3 flex flex.col gap-1">
+              <div className="glass rounded-xl px-3 py-3 flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase tracking-wide text-amber-300">
-                    High Risk (31–45)
+                    High Risk Dormant (31–45)
                   </span>
                   <AlertTriangle className="w-6 h-6 text-amber-300" />
                 </div>
