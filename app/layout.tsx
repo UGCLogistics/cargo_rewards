@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { AuthProvider } from "../context/AuthContext";
 import RewardsHeader from "@/components/RewardsHeader";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "CARGO Rewards",
