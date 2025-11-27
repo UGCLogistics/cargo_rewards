@@ -1,4 +1,11 @@
-User-agent: *
-Allow: /
+### robots.txt
 
-Sitemap: https://ugc-logistics-rewards.com/sitemap.xml
+
+User-agent: *
+Disallow: /auth/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /register
+Allow: /
+Sitemap: https://rewards.utamaglobalindocargo.com/sitemap.xml
