@@ -17,7 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      {/* app-shell -> base navy, shape diatur di globals.css */}
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body className="app-shell h-screen overflow-hidden antialiased">
         {/* SHAPE ABSTRACT ORANGE–RED (3D, 3 buah, tanpa blur) */}
         <div className="bg-orb-layer">
@@ -33,6 +35,10 @@ export default function RootLayout({
             <div className="flex-1 overflow-hidden">{children}</div>
           </div>
         </AuthProvider>
+
+        {/* Optional Vercel Tools */}
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
