@@ -275,7 +275,7 @@ export default function HomePage() {
                       alt="CARGO Rewards"
                       width={440}
                       height={120}
-                      className="h-10 w-auto md:h-12"
+                      className="h-14 w-auto md:h-14"
                       priority
                     />
 
@@ -289,7 +289,7 @@ export default function HomePage() {
                         alt="UGC Logistics"
                         width={120}
                         height={36}
-                        className="h-6 w-auto md:h-7"
+                        className="h-10 w-auto md:h-9"
                       />
                     </div>
                   </div>
