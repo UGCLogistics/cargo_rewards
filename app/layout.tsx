@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "CARGO Rewards",
-  description: "Portal loyalti untuk pelanggan C.A.R.G.O",
+  description: "Loyalty Program untuk pelanggan UGC Logistics",
 };
 
 export default function RootLayout({
