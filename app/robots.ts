@@ -14,6 +14,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://ugc-logistics-rewards.com/sitemap.xml',
+    sitemap: 'https://rewards.utamaglobalindocargo.com/sitemap.xml',
   }
 }
