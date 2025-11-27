@@ -1,44 +1,36 @@
-"use client";
+### SEO.tsx
 
 import Head from 'next/head';
 
-/**
- * SEO component centralizes meta tag management for the CARGO Rewards
- * site. Pass in the appropriate properties to customize meta title,
- * description, keywords and Open Graph data. This component can be
- * included at the top of any page where you need bespoke SEO.
- */
 export default function SEO({
-  title,
-  description,
-  keywords = [],
-  url,
-  image,
-}: {
-  title: string;
-  description: string;
-  keywords?: string[];
-  url?: string;
-  image?: string;
+  title = "CARGO Rewards - Program Loyalitas Pelanggan UGC Logistics",
+  description = "Dapatkan Promo Ongkir menartik untuk Anda dengan program CARGO Rewards dari UGC Logistics. Dapatkan diskon, cashback, dan poin untuk setiap transaksi pengiriman anda.",
+  keywords = "logistik, rewards, cargo, loyalitas pelanggan, LTL, cashback, diskon, promo, ongkir murah, promo ongkir, jasa cargo, gratis ongkir",
+  url = "https://rewards.utamaglobalindocargo.com",
+  image = "https://rewards.utamaglobalindocargo.com/og-image.png"
 }) {
-  const keywordString = keywords.join(', ');
   return (
     <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
-      {keywordString && <meta name="keywords" content={keywordString} />}
-      {/* Open Graph metadata */}
+      <meta name="keywords" content={keywords} />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+      {/* Canonical */}
+      <link rel="canonical" href={url} />
+
+      {/* Open Graph */}
       <meta property="og:type" content="website" />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
-      {url && <meta property="og:url" content={url} />}
-      {image && <meta property="og:image" content={image} />}
-      <meta property="og:site_name" content="CARGO Rewards" />
-      {/* Twitter Card metadata */}
+      <meta property="og:url" content={url} />
+      <meta property="og:image" content={image} />
+
+      {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-      {image && <meta name="twitter:image" content={image} />}
+      <meta name="twitter:image" content={image} />
     </Head>
   );
 }
