@@ -245,16 +245,7 @@ export default function HomePage() {
       <SEO
         title="Program Loyalitas Pelanggan & Pengiriman Cargo | CARGO Rewards"
         description="CARGO Rewards adalah program loyalitas pelanggan dari UGC Logistics untuk bisnis yang membutuhkan jasa pengiriman cargo di seluruh Indonesia. Hemat biaya pengiriman dengan diskon, cashback, dan poin loyalty di setiap transaksi."
-        keywords={[
-          "program loyalitas logistik",
-          "jasa pengiriman cargo",
-          "hemat biaya pengiriman",
-          "logistik bisnis Indonesia",
-          "cashback pengiriman",
-          "loyalty program logistik",
-          "UGC Logistics",
-          "rewards cargo",
-        ]}
+        keywords="program loyalitas logistik, jasa pengiriman cargo, hemat biaya pengiriman, logistik bisnis Indonesia, cashback pengiriman, loyalty program logistik, UGC Logistics, rewards cargo, promo ongkir, gratis ongkir, jasa kirim murah, jasa cargo, jasa import, pengurusan customs"
         url="https://utamaglobalindocargo.com/rewards"
         image="/og-image.png"
       />
