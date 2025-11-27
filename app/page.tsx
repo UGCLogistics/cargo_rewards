@@ -275,7 +275,7 @@ export default function HomePage() {
                       alt="CARGO Rewards"
                       width={440}
                       height={120}
-                      className="h-14 w-auto md:h-14"
+                      className="h-20 w-auto md:h-19"
                       priority
                     />
 
