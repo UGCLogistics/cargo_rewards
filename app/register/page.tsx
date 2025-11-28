@@ -76,7 +76,7 @@ export default function RegisterPage() {
           ? `${window.location.origin}/auth/callback`
           : undefined;
 
-      // 1) Sign up ke Supabase Auth, kirim email konfirmasi
+      // 1) Daftarkan user ke Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -101,44 +101,14 @@ export default function RegisterPage() {
         return;
       }
 
-      const newUserId = data.user?.id;
-
-      if (!newUserId) {
+      if (!data?.user?.id) {
         setErrorMsg(
           "Akun tidak berhasil dibuat di Auth. Silakan coba lagi atau hubungi admin."
         );
         return;
       }
 
-      // 2) Simpan profil ke users dan customers melalui API service-role
-      const res = await fetch("/api/register-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: newUserId,
-          companyName: form.companyName,
-          picName: form.picName,
-          businessField: form.businessField,
-          taxId: form.taxId,
-          phone: form.phone,
-          email: form.email,
-          address: form.address,
-        }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        console.error("register-profile error", json);
-        setErrorMsg(
-          json?.error ||
-            "Akun berhasil dibuat, tetapi terjadi kesalahan saat menyimpan profil."
-        );
-        return;
-      }
-
+      // Mulai sini, trigger di database akan otomatis isi public.users dan public.customers
       setSuccessMsg(
         "Akun berhasil dibuat. Silakan cek email Anda untuk konfirmasi sebelum login."
       );
