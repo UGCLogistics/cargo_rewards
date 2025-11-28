@@ -33,7 +33,7 @@ export default function RegisterPage() {
     businessField: "",
     phone: "",
     address: "",
-    accountType: "CUSTOMER", // form ini hanya untuk CUSTOMER
+    accountType: "CUSTOMER",
   });
 
   const [loading, setLoading] = useState(false);
@@ -60,15 +60,22 @@ export default function RegisterPage() {
       );
       return;
     }
+
     if (form.password.length < 8) {
       setErrorMsg("Kata sandi minimal 8 karakter.");
       return;
     }
 
     setLoading(true);
+
     try {
-      // Form ini hanya untuk CUSTOMER
       const userRole: "CUSTOMER" | "STAFF" = "CUSTOMER";
+
+      // Redirect setelah user klik link konfirmasi
+      const redirectUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
 
       // 1) Daftarkan user ke Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -83,13 +90,14 @@ export default function RegisterPage() {
             tax_id: form.taxId,
             businessfield: form.businessField,
             address: form.address,
-            account_type: "CUSTOMER", // internal dibuat oleh admin, bukan dari form ini
+            account_type: "CUSTOMER",
           },
+          emailRedirectTo: redirectUrl,
         },
       });
 
       if (error) {
-        console.error(error);
+        console.error("signUp error", error);
         setErrorMsg(error.message || "Gagal mendaftarkan akun.");
         return;
       }
@@ -98,18 +106,18 @@ export default function RegisterPage() {
 
       if (!newUserId) {
         setErrorMsg(
-          "Akun berhasil dibuat di Auth, tetapi ID user tidak tersedia. Coba cek pengaturan email konfirmasi atau hubungi admin."
+          "Akun tidak berhasil dibuat di Auth. Silakan coba lagi atau hubungi admin."
         );
         return;
       }
 
       // 2) Insert ke public.users (profil internal)
       const { error: userInsertError } = await supabase.from("users").insert({
-        id: newUserId, // uuid
-        companyname: form.companyName, // kolom di tabel: companyname
-        name: form.picName, // nama PIC
-        role: userRole, // 'CUSTOMER'
-        status: "ACTIVE", // default
+        id: newUserId,
+        companyname: form.companyName,
+        name: form.picName,
+        role: userRole,
+        status: "ACTIVE",
       });
 
       if (userInsertError) {
@@ -143,10 +151,12 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccessMsg("Akun berhasil dibuat. Mengarahkan ke halaman masuk…");
+      setSuccessMsg(
+        "Akun berhasil dibuat. Silakan cek email Anda untuk konfirmasi sebelum login."
+      );
       setTimeout(() => {
         router.push("/login");
-      }, 1500);
+      }, 2000);
     } catch (err) {
       console.error(err);
       setErrorMsg("Terjadi kesalahan tak terduga saat mendaftar.");
@@ -156,17 +166,12 @@ export default function RegisterPage() {
   };
 
   return (
-    // h-full + overflow-auto supaya bisa scroll di dalam layout
     <div className="h-full overflow-auto px-4">
-      {/* PADDING ATAS–BAWAH DI SINI */}
       <div className="mx-auto flex max-w-md items-start justify-center py-16 md:py-16">
         <div className="relative w-full">
-          {/* Glow halus di belakang card, warna senada accent */}
           <div className="pointer-events-none absolute -inset-x-10 -top-16 -bottom-10 -z-10 opacity-40 blur-3xl bg-[radial-gradient(circle_at_top,_rgba(255,70,0,0.7)_0,_transparent_55%),_radial-gradient(circle_at_bottom,_rgba(15,23,42,0.9)_0,_transparent_60%)]" />
 
-          {/* CARD REGISTER – pakai glass-card */}
           <div className="glass-card px-6 py-7 md:px-7 md:py-8">
-            {/* Header logo */}
             <div className="mb-4 flex items-center justify-center">
               <Image
                 src={ugcLogo}
@@ -178,7 +183,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Judul & copy */}
             <div className="mb-6 text-center">
               <p className="mb-1 text-[10px] uppercase tracking-[0.26em] text-slate-400">
                 C.A.R.G.O Rewards
@@ -199,7 +203,6 @@ export default function RegisterPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              {/* PIC */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Nama PIC / Contact person
@@ -214,7 +217,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Email */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Email kerja (untuk login)
@@ -229,7 +231,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Kata sandi
@@ -244,7 +245,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* HP */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   No. HP / WhatsApp
@@ -253,13 +253,12 @@ export default function RegisterPage() {
                   type="tel"
                   name="phone"
                   value={form.phone}
-                  onChange={handleChange}
+                  onChange={handleChange"
                   placeholder="08xxxxxxxxxx"
                   className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#ff4600]"
                 />
               </div>
 
-              {/* Perusahaan */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Nama perusahaan
@@ -274,7 +273,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* NPWP */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   NPWP / Tax ID (opsional)
@@ -289,7 +287,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Bidang usaha */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Bidang usaha
@@ -304,7 +301,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Alamat */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Alamat lengkap
@@ -319,7 +315,6 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Tipe akun - hanya informasi */}
               <div>
                 <label className="mb-1 block text-xs font-medium text-slate-200">
                   Tipe akun
@@ -338,12 +333,12 @@ export default function RegisterPage() {
                 </p>
               </div>
 
-              {/* Error / success */}
               {errorMsg && (
                 <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-300">
                   {errorMsg}
                 </div>
               )}
+
               {successMsg && (
                 <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-300">
                   {successMsg}
@@ -355,7 +350,7 @@ export default function RegisterPage() {
                 disabled={loading}
                 className="btn-primary mt-2 w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Memproses…" : "Daftar"}
+                {loading ? "Memproses..." : "Daftar"}
               </button>
             </form>
 
