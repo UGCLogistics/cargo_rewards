@@ -71,7 +71,7 @@ export default function RegisterPage() {
     try {
       const userRole: "CUSTOMER" | "STAFF" = "CUSTOMER";
 
-      // Redirect setelah user klik link konfirmasi
+      // URL redirect setelah user klik link konfirmasi di email
       const redirectUrl =
         typeof window !== "undefined"
           ? `${window.location.origin}/auth/callback`
@@ -154,6 +154,7 @@ export default function RegisterPage() {
       setSuccessMsg(
         "Akun berhasil dibuat. Silakan cek email Anda untuk konfirmasi sebelum login."
       );
+
       setTimeout(() => {
         router.push("/login");
       }, 2000);
@@ -253,7 +254,7 @@ export default function RegisterPage() {
                   type="tel"
                   name="phone"
                   value={form.phone}
-                  onChange={handleChange"
+                  onChange={handleChange}
                   placeholder="08xxxxxxxxxx"
                   className="w-full rounded-xl border border-slate-700 bg-slate-900/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#ff4600]"
                 />
