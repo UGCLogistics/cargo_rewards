@@ -71,13 +71,12 @@ export default function RegisterPage() {
     try {
       const userRole: "CUSTOMER" | "STAFF" = "CUSTOMER";
 
-      // URL redirect setelah user klik link konfirmasi di email
       const redirectUrl =
         typeof window !== "undefined"
           ? `${window.location.origin}/auth/callback`
           : undefined;
 
-      // 1) Daftarkan user ke Supabase Auth
+      // 1) Sign up ke Supabase Auth, kirim email konfirmasi
       const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -111,42 +110,31 @@ export default function RegisterPage() {
         return;
       }
 
-      // 2) Insert ke public.users (profil internal)
-      const { error: userInsertError } = await supabase.from("users").insert({
-        id: newUserId,
-        companyname: form.companyName,
-        name: form.picName,
-        role: userRole,
-        status: "ACTIVE",
+      // 2) Simpan profil ke users dan customers melalui API service-role
+      const res = await fetch("/api/register-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: newUserId,
+          companyName: form.companyName,
+          picName: form.picName,
+          businessField: form.businessField,
+          taxId: form.taxId,
+          phone: form.phone,
+          email: form.email,
+          address: form.address,
+        }),
       });
 
-      if (userInsertError) {
-        console.error("users insert error", userInsertError);
-        setErrorMsg(
-          "Akun berhasil dibuat, tetapi gagal menyimpan profil user: " +
-            (userInsertError.message ?? "")
-        );
-        return;
-      }
+      const json = await res.json();
 
-      // 3) Insert ke public.customers (profil pelanggan)
-      const { error: customerError } = await supabase.from("customers").insert({
-        user_id: newUserId,
-        company_name: form.companyName,
-        tax_id: form.taxId || null,
-        businessfield: form.businessField || null,
-        pic_name: form.picName,
-        phone: form.phone || null,
-        email: form.email,
-        address: form.address || null,
-        salesname: null,
-      });
-
-      if (customerError) {
-        console.error("customers insert error", customerError);
+      if (!res.ok) {
+        console.error("register-profile error", json);
         setErrorMsg(
-          "Akun berhasil dibuat, tetapi data pelanggan belum tersimpan penuh: " +
-            (customerError.message ?? "")
+          json?.error ||
+            "Akun berhasil dibuat, tetapi terjadi kesalahan saat menyimpan profil."
         );
         return;
       }
